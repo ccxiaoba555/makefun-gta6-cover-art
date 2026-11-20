@@ -1,10 +1,18 @@
-// Vice City Nights — cover renderer (canvas, no network, no external assets).
-// Draws an original multi-panel poster: sunset sky, sun disc, vector skyline
-// and palm silhouettes, photo panels with per-panel crop, and bold condensed
-// caption lettering with outline + drop shadow. No Rockstar art, logo, or font.
+// Vice City Nights — cover renderer (canvas, offline, no external assets).
+// Draws an original multi-panel poster: a gradient sky with a slatted sun,
+// vector skyline and palm silhouettes, photo panels with per-panel crop, and
+// heavy display caption lettering with outline + drop shadow. No Rockstar
+// artwork, logo, character, or game font is used anywhere.
+
+export const GRADE_PRESETS = {
+  sunset: { top: '#2b1055', mid: '#ff2e88', low: '#ff9a3d', bottom: '#ffd97a', wash: '255,122,61' },
+  neon: { top: '#0b0626', mid: '#7a2cff', low: '#ff2e88', bottom: '#22e6ff', wash: '34,230,255' },
+  dawn: { top: '#1c2a5e', mid: '#e85d9e', low: '#ffb347', bottom: '#fff3b0', wash: '255,179,71' },
+};
 
 export const DEFAULT_STATE = {
   layout: 'diagonal',
+  preset: 'sunset',
   grade: 75,
   neon: 80,
   grain: 35,
@@ -14,6 +22,8 @@ export const DEFAULT_STATE = {
   sub: 'OUT NOW · GRAND THEFT AUTO VI',
   capSize: 104,
   capY: 82,
+  capTilt: -2,
+  capStyle: 'solid',
   tracking: 8,
   // panels[i] = { photo: index into photos[] | -1, zoom, ox, oy } (ox/oy in -1..1)
   panels: [
@@ -25,14 +35,13 @@ export const DEFAULT_STATE = {
 
 export function panelRects(layout, w, h) {
   const m = Math.round(w * 0.045); // outer margin
+  const gap = Math.round(w * 0.025);
   if (layout === 'triptych') {
-    const gap = Math.round(w * 0.02);
     const pw = (w - 2 * m - 2 * gap) / 3;
     const ph = h - 2 * m;
     return [0, 1, 2].map((i) => ({ x: m + i * (pw + gap), y: m, w: pw, h: ph, tilt: 0 }));
   }
   if (layout === 'stack') {
-    const gap = Math.round(w * 0.025);
     const heroH = (h - 2 * m - gap) * 0.62;
     const stripH = h - 2 * m - gap - heroH;
     const pw = (w - 2 * m - gap) / 2;
@@ -42,8 +51,20 @@ export function panelRects(layout, w, h) {
       { x: m + pw + gap, y: m + heroH + gap, w: pw, h: stripH, tilt: 0 },
     ];
   }
+  if (layout === 'billboard') {
+    // Wide hero across the top, a caption band, then two panels below.
+    const heroH = (h - 2 * m) * 0.52;
+    const bandH = Math.round(h * 0.09);
+    const lowerH = h - 2 * m - heroH - bandH - gap;
+    const pw = (w - 2 * m - gap) / 2;
+    const ly = m + heroH + bandH + gap;
+    return [
+      { x: m, y: m, w: w - 2 * m, h: heroH, tilt: 0 },
+      { x: m, y: ly, w: pw, h: lowerH, tilt: 0.02 },
+      { x: m + pw + gap, y: ly, w: pw, h: lowerH, tilt: -0.02 },
+    ];
+  }
   // diagonal: big tilted hero on the left, two stacked panels on the right.
-  const gap = Math.round(w * 0.025);
   const heroW = (w - 2 * m - gap) * 0.62;
   const sideW = w - 2 * m - gap - heroW;
   const sideH = (h - 2 * m - gap) / 2;
@@ -54,18 +75,37 @@ export function panelRects(layout, w, h) {
   ];
 }
 
-function sunsetSky(ctx, w, h, grade) {
-  const g = grade / 100;
+function mix(a, b, t) {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return '#' + pa.map((v, i) => Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+
+// Deterministic pseudo-random stream so the skyline is identical on every
+// render at a given size (no flicker between preview and export).
+function seeded(seed) {
+  let s = seed;
+  return () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+}
+
+function paintSky(ctx, w, h, state) {
+  const g = state.grade / 100;
+  const p = GRADE_PRESETS[state.preset] || GRADE_PRESETS.sunset;
   const sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, mix('#2b1055', '#3d1a6e', g));
-  sky.addColorStop(0.42, mix('#7b2d8b', '#ff2e88', g));
-  sky.addColorStop(0.68, mix('#ff7a3d', '#ff9a3d', g));
-  sky.addColorStop(1, mix('#ffc46b', '#ffd97a', g));
+  sky.addColorStop(0, mix('#12081f', p.top, g));
+  sky.addColorStop(0.42, mix('#5b2a72', p.mid, g));
+  sky.addColorStop(0.68, mix('#c65a4a', p.low, g));
+  sky.addColorStop(1, mix('#e8b06a', p.bottom, g));
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
-  // Sun disc with horizontal slats, low on the horizon.
+  // Sun disc with horizontal slats, low on the horizon, wrapped in a glow.
   const cx = w * 0.5, cy = h * 0.46, r = Math.min(w, h) * 0.17;
+  const glow = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 2.4);
+  glow.addColorStop(0, 'rgba(255,179,71,0.55)');
+  glow.addColorStop(1, 'rgba(255,179,71,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(cx - r * 2.4, cy - r * 2.4, r * 4.8, r * 4.8);
   const sun = ctx.createLinearGradient(0, cy - r, 0, cy + r);
   sun.addColorStop(0, '#fff3b0');
   sun.addColorStop(0.55, '#ffb347');
@@ -87,35 +127,38 @@ function sunsetSky(ctx, w, h, grade) {
   ctx.restore();
 }
 
-function mix(a, b, t) {
-  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
-  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
-  return '#' + pa.map((v, i) => Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, '0')).join('');
-}
-
-function drawSkyline(ctx, w, h) {
+function paintSkyline(ctx, w, h) {
   const base = h * 0.86;
+  const rnd = seeded(20261120);
+  // Back row of towers with blinking rooftop beacons.
   ctx.fillStyle = '#160a2e';
-  // Back row of towers.
   let x = -w * 0.02;
-  let seed = 7;
-  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   while (x < w * 1.02) {
     const bw = w * (0.05 + rnd() * 0.06);
     const bh = h * (0.10 + rnd() * 0.22);
     ctx.fillRect(x, base - bh, bw, bh);
-    if (rnd() > 0.6) { // rooftop antenna
+    if (rnd() > 0.55) { // rooftop antenna + beacon dot
       ctx.fillRect(x + bw / 2 - 1, base - bh - h * 0.05, 2, h * 0.05);
+      ctx.fillStyle = '#ff2e88';
+      ctx.fillRect(x + bw / 2 - 2, base - bh - h * 0.05 - 4, 4, 4);
+      ctx.fillStyle = '#160a2e';
     }
     x += bw + w * 0.008;
   }
-  // Front row, lower and darker, with lit windows.
+  // Front row, lower and darker, with lit windows and one neon sign block.
   ctx.fillStyle = '#0d051f';
   x = -w * 0.01;
+  let signDone = false;
   while (x < w * 1.01) {
     const bw = w * (0.07 + rnd() * 0.05);
     const bh = h * (0.05 + rnd() * 0.09);
     ctx.fillRect(x, base - bh, bw, bh + h * 0.14);
+    if (!signDone && rnd() > 0.5) {
+      signDone = true;
+      ctx.fillStyle = '#ff2e88';
+      ctx.fillRect(x + bw * 0.18, base - bh + h * 0.02, bw * 0.64, h * 0.035);
+      ctx.fillStyle = '#0d051f';
+    }
     ctx.fillStyle = 'rgba(255,214,120,0.85)';
     for (let wy = base - bh + 8; wy < base - 6; wy += 16) {
       for (let wx = x + 6; wx < x + bw - 6; wx += 14) {
@@ -127,7 +170,7 @@ function drawSkyline(ctx, w, h) {
   }
 }
 
-function drawPalm(ctx, x, y, s, lean) {
+function paintPalm(ctx, x, y, s, lean) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(lean);
@@ -156,7 +199,7 @@ function drawPalm(ctx, x, y, s, lean) {
   ctx.restore();
 }
 
-function drawPhotoInto(ctx, img, rect, panel, w, h) {
+function paintPhoto(ctx, img, rect, panel, preset) {
   const { x, y, w: pw, h: ph } = rect;
   ctx.save();
   ctx.beginPath();
@@ -187,8 +230,9 @@ function drawPhotoInto(ctx, img, rect, panel, w, h) {
     }
   }
   // Warm sunset wash over every panel so photos grade into the poster.
+  const p = GRADE_PRESETS[preset] || GRADE_PRESETS.sunset;
   const wash = ctx.createLinearGradient(x, y, x, y + ph);
-  wash.addColorStop(0, 'rgba(255,46,136,0.10)');
+  wash.addColorStop(0, `rgba(${p.wash},0.10)`);
   wash.addColorStop(0.6, 'rgba(255,122,61,0.08)');
   wash.addColorStop(1, 'rgba(43,16,85,0.22)');
   ctx.fillStyle = wash;
@@ -196,35 +240,63 @@ function drawPhotoInto(ctx, img, rect, panel, w, h) {
   ctx.restore();
 }
 
-function drawCaption(ctx, w, h, state) {
+// One shared grain tile, built once per size from a seeded stream, so the
+// grain is stable between preview and export instead of re-randomising.
+let grainTile = null;
+let grainKey = '';
+function grainPattern(ctx, w, h, amount) {
+  const key = `${w}x${h}`;
+  if (grainTile && grainKey === key) return grainTile;
+  const tile = document.createElement('canvas');
+  tile.width = 160;
+  tile.height = 160;
+  const tctx = tile.getContext('2d');
+  const rnd = seeded(777);
+  const img = tctx.createImageData(160, 160);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = rnd() > 0.5 ? 255 : 0;
+    img.data[i] = v;
+    img.data[i + 1] = v;
+    img.data[i + 2] = v;
+    img.data[i + 3] = Math.floor(rnd() * 22);
+  }
+  tctx.putImageData(img, 0, 0);
+  grainTile = ctx.createPattern(tile, 'repeat');
+  grainKey = key;
+  return grainTile;
+}
+
+function paintCaption(ctx, w, h, state) {
   let size = (state.capSize / 1080) * w;
   const y = (state.capY / 100) * h;
   const spacing = (state.tracking / 1080) * w;
+  const tilt = ((state.capTilt || 0) * Math.PI) / 180;
+  const text = (state.caption || 'VICE CITY NIGHTS').toUpperCase();
   ctx.save();
+  ctx.translate(w / 2, y);
+  ctx.rotate(tilt);
+  ctx.translate(-w / 2, -y);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const text = (state.caption || 'VICE CITY NIGHTS').toUpperCase();
+  const fontFor = (s) => `400 ${s}px "Archivo Black", "Arial Black", sans-serif`;
   // Auto-fit: shrink the headline until it fits inside 94% of the width.
   const measure = (s) => {
-    ctx.font = `700 ${s}px Oswald, "Arial Narrow", sans-serif`;
+    ctx.font = fontFor(s);
     return [...text].reduce((a, ch) => a + ctx.measureText(ch).width, 0) + spacing * Math.max(0, text.length - 1);
   };
   while (size > w * 0.04 && measure(size) > w * 0.94) size *= 0.94;
-  const font = `700 ${size}px Oswald, "Arial Narrow", sans-serif`;
-  ctx.font = font;
-  // Letter-spaced manual draw so tracking works in every browser.
+  ctx.font = fontFor(size);
   const widths = [...text].map((ch) => ctx.measureText(ch).width);
   const total = widths.reduce((a, b) => a + b, 0) + spacing * Math.max(0, text.length - 1);
-  let cx = w / 2 - total / 2;
   const drawLine = (mode) => {
-    let px = cx;
+    let px = w / 2 - total / 2;
     for (let i = 0; i < text.length; i++) {
       if (mode === 'fill') ctx.fillText(text[i], px + widths[i] / 2, y);
       else ctx.strokeText(text[i], px + widths[i] / 2, y);
       px += widths[i] + spacing;
     }
   };
-  // Drop shadow, thick dark outline, white fill, pink under-glow.
+  // Drop shadow + thick dark outline; solid fill, or hollow outline style.
   ctx.shadowColor = 'rgba(255,46,136,0.9)';
   ctx.shadowBlur = size * 0.22;
   ctx.shadowOffsetY = size * 0.05;
@@ -235,8 +307,18 @@ function drawCaption(ctx, w, h, state) {
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
-  ctx.fillStyle = '#ffffff';
-  drawLine('fill');
+  if (state.capStyle === 'outline') {
+    // Hollow letters need a soft dark plate behind them, or they vanish
+    // against the bright sun disc. The plate is sized to the text block.
+    ctx.fillStyle = 'rgba(13,5,31,0.45)';
+    ctx.fillRect(w / 2 - total / 2 - size * 0.28, y - size * 0.58, total + size * 0.56, size * 1.16);
+    ctx.lineWidth = size * 0.045;
+    ctx.strokeStyle = '#ffffff';
+    drawLine('stroke');
+  } else {
+    ctx.fillStyle = '#ffffff';
+    drawLine('fill');
+  }
   ctx.restore();
 
   // Sub-caption ribbon.
@@ -244,7 +326,7 @@ function drawCaption(ctx, w, h, state) {
   if (sub) {
     const subSize = size * 0.24;
     ctx.save();
-    ctx.font = `600 ${subSize}px Oswald, "Arial Narrow", sans-serif`;
+    ctx.font = `400 ${subSize}px "Archivo Black", "Arial Black", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const sw = ctx.measureText(sub).width + subSize * 1.6;
@@ -260,18 +342,7 @@ function drawCaption(ctx, w, h, state) {
   }
 }
 
-function addGrain(ctx, w, h, amount) {
-  const n = Math.floor((amount / 100) * 2600);
-  ctx.save();
-  for (let i = 0; i < n; i++) {
-    const v = Math.random();
-    ctx.fillStyle = v > 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
-    ctx.fillRect(Math.random() * w, Math.random() * h, 1.6, 1.6);
-  }
-  ctx.restore();
-}
-
-function addVignette(ctx, w, h) {
+function paintVignette(ctx, w, h) {
   const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.42, w / 2, h / 2, Math.max(w, h) * 0.75);
   g.addColorStop(0, 'rgba(10,4,24,0)');
   g.addColorStop(1, 'rgba(10,4,24,0.42)');
@@ -285,12 +356,12 @@ export function renderCover(canvas, photos, state) {
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
   ctx.clearRect(0, 0, w, h);
-  sunsetSky(ctx, w, h, state.grade);
+  paintSky(ctx, w, h, state);
   if (state.skyline) {
-    drawSkyline(ctx, w, h);
-    drawPalm(ctx, w * 0.06, h * 0.86, Math.min(w, h) / 340, -0.10);
-    drawPalm(ctx, w * 0.94, h * 0.88, Math.min(w, h) / 300, 0.12);
-    drawPalm(ctx, w * 0.86, h * 0.845, Math.min(w, h) / 460, 0.05);
+    paintSkyline(ctx, w, h);
+    paintPalm(ctx, w * 0.06, h * 0.86, Math.min(w, h) / 340, -0.10);
+    paintPalm(ctx, w * 0.94, h * 0.88, Math.min(w, h) / 300, 0.12);
+    paintPalm(ctx, w * 0.86, h * 0.845, Math.min(w, h) / 460, 0.05);
   }
   const rects = panelRects(state.layout, w, h);
   const neonA = 0.35 + (state.neon / 100) * 0.65;
@@ -309,18 +380,24 @@ export function renderCover(canvas, photos, state) {
     ctx.fillStyle = '#fff';
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     ctx.shadowBlur = 0;
-    drawPhotoInto(ctx, img, rect, panel, w, h);
+    paintPhoto(ctx, img, rect, panel, state.preset);
     ctx.lineWidth = Math.max(3, w * 0.006);
     ctx.strokeStyle = i === 0 ? '#ff2e88' : '#eaf6ff';
     ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
     ctx.restore();
   });
-  drawCaption(ctx, w, h, state);
-  if (state.vignette) addVignette(ctx, w, h);
-  if (state.grain > 0) addGrain(ctx, w, h, state.grain);
+  paintCaption(ctx, w, h, state);
+  if (state.vignette) paintVignette(ctx, w, h);
+  if (state.grain > 0) {
+    ctx.save();
+    ctx.globalAlpha = state.grain / 100;
+    ctx.fillStyle = grainPattern(ctx, w, h, state.grain);
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
   // Fan-made tag, small, bottom-right.
   ctx.save();
-  ctx.font = `600 ${Math.max(11, w * 0.011)}px Oswald, sans-serif`;
+  ctx.font = `400 ${Math.max(11, w * 0.011)}px "Archivo Black", sans-serif`;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'bottom';
   ctx.fillStyle = 'rgba(255,255,255,0.75)';

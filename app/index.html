@@ -54,6 +54,14 @@
           <option value="diagonal">Diagonal hero — big tilted hero, two stacked panels</option>
           <option value="triptych">Triptych — three upright panels</option>
           <option value="stack">Stack — wide hero over a twin strip</option>
+          <option value="billboard">Billboard — wide hero, caption band, twin panels</option>
+        </select>
+      </label>
+      <label>Colour grade
+        <select id="sel-preset">
+          <option value="sunset">Sunset — orange-pink Vice City dusk</option>
+          <option value="neon">Neon Nights — purple and cyan after dark</option>
+          <option value="dawn">Dawn — soft rose and gold morning</option>
         </select>
       </label>
       <label>Sunset grade
@@ -77,11 +85,20 @@
       <label>Sub-caption
         <input id="inp-sub" type="text" value="OUT NOW &middot; GRAND THEFT AUTO VI" maxlength="60">
       </label>
+      <label>Caption style
+        <select id="sel-capstyle">
+          <option value="solid">Solid — white fill, dark outline</option>
+          <option value="outline">Outline — hollow neon letters</option>
+        </select>
+      </label>
       <label>Caption size
         <input id="rng-cap-size" type="range" min="40" max="160" value="104">
       </label>
       <label>Caption height
         <input id="rng-cap-y" type="range" min="0" max="100" value="82">
+      </label>
+      <label>Caption tilt
+        <input id="rng-cap-tilt" type="range" min="-8" max="8" value="-2">
       </label>
       <label>Letter spacing
         <input id="rng-tracking" type="range" min="0" max="30" value="8">

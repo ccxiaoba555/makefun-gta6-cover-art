@@ -6,20 +6,24 @@
 
 Turn your own photos into a GTA 6-style multi-panel poster: a big tilted hero
 panel, two stacked side panels, a Vice City sunset grade with neon pink and cyan,
-original vector skyline and palm silhouettes, and bold condensed caption lettering
-with outline and drop shadow. GTA VI is out now — this is a fan-made way to make
-your own poster for it.
+original vector skyline and palm silhouettes, and heavy Archivo Black caption
+lettering with outline and drop shadow. GTA VI is out now — this is a fan-made
+way to make your own poster for it.
 
 ## What it does
 
-- **Multi-panel poster** — three layouts (Diagonal hero, Triptych, Stack), thick
-  neon-framed panels, sunset sky with a slatted sun disc, and vector skyline/palms
-  drawn fresh on canvas.
+- **Multi-panel poster** — four layouts (Diagonal hero, Triptych, Stack,
+  Billboard), thick neon-framed panels, a slatted sun disc with glow, and
+  vector skyline/palms drawn fresh on canvas.
+- **Colour grades** — three presets (Sunset, Neon Nights, Dawn) plus grade,
+  neon glow, and film grain sliders. The grain is a seeded tile, so preview
+  and export look identical.
 - **Any photo** — upload 1–3 of your own photos (they never leave your browser),
   assign any photo to any panel, drag to reposition, scroll to zoom, or tune
   zoom/shift with sliders. One photo can fill several panels.
-- **Caption** — edit the headline and sub-caption, size, height, and letter
-  spacing. Two free sample photos ship in `app/samples/` so it works immediately.
+- **Caption** — edit the headline and sub-caption, pick solid or hollow outline
+  lettering, and set size, height, tilt, and letter spacing. Two free sample
+  photos ship in `app/samples/` so it works immediately.
 - **Fast export** — one click downloads a PNG at **1080×1080**, **1080×1350**, or
   **1920×1080**.
 
@@ -31,8 +35,8 @@ node serve.ts
 ```
 
 No build step, no network requests: every script, font, and image is a file
-under `app/`. The display font is Oswald (SIL Open Font License 1.1, see
-`app/fonts/OFL.txt`).
+under `app/`. The display font is Archivo Black (SIL Open Font License 1.1,
+see `app/fonts/OFL.txt`).
 
 ## Hand it in
 

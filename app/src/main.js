@@ -1,5 +1,5 @@
-// Vice City Nights — editor UI. Own photos stay local; export renders the same
-// canvas code at full size and downloads a PNG. No network requests at all.
+// Vice City Nights — editor UI. Your photos stay local; export renders the
+// same canvas code at full size and downloads a PNG. No network requests.
 import { renderCover, panelRects, DEFAULT_STATE } from './cover.js';
 
 const canvas = document.getElementById('poster');
@@ -95,13 +95,30 @@ function bind(id, fn) {
 }
 
 bind('sel-layout', (el) => { state.layout = el.value; });
+bind('sel-preset', (el) => {
+  state.preset = el.value;
+  // Each grade preset ships with a grade/neon/grain starting point.
+  const starts = {
+    sunset: { grade: 75, neon: 80, grain: 35 },
+    neon: { grade: 90, neon: 100, grain: 45 },
+    dawn: { grade: 60, neon: 55, grain: 25 },
+  }[el.value] || { grade: 75, neon: 80, grain: 35 };
+  state.grade = starts.grade;
+  state.neon = starts.neon;
+  state.grain = starts.grain;
+  document.getElementById('rng-grade').value = starts.grade;
+  document.getElementById('rng-neon').value = starts.neon;
+  document.getElementById('rng-grain').value = starts.grain;
+});
 bind('rng-grade', (el) => { state.grade = +el.value; });
 bind('rng-neon', (el) => { state.neon = +el.value; });
 bind('rng-grain', (el) => { state.grain = +el.value; });
 bind('inp-caption', (el) => { state.caption = el.value; });
 bind('inp-sub', (el) => { state.sub = el.value; });
+bind('sel-capstyle', (el) => { state.capStyle = el.value; });
 bind('rng-cap-size', (el) => { state.capSize = +el.value; });
 bind('rng-cap-y', (el) => { state.capY = +el.value; });
+bind('rng-cap-tilt', (el) => { state.capTilt = +el.value; });
 bind('rng-tracking', (el) => { state.tracking = +el.value; });
 bind('rng-zoom', (el) => { state.panels[selectedPanel].zoom = +el.value / 100; });
 bind('rng-ox', (el) => { state.panels[selectedPanel].ox = +el.value / 100; });
@@ -139,15 +156,22 @@ document.getElementById('btn-fill-all').addEventListener('click', () => {
 });
 
 document.getElementById('btn-random').addEventListener('click', () => {
-  const layouts = ['diagonal', 'triptych', 'stack'];
+  const layouts = ['diagonal', 'triptych', 'stack', 'billboard'];
   state.layout = layouts[Math.floor(Math.random() * layouts.length)];
   document.getElementById('sel-layout').value = state.layout;
+  const presets = ['sunset', 'neon', 'dawn'];
+  state.preset = presets[Math.floor(Math.random() * presets.length)];
+  document.getElementById('sel-preset').value = state.preset;
   state.grade = 55 + Math.floor(Math.random() * 45);
   state.neon = 50 + Math.floor(Math.random() * 50);
   state.grain = Math.floor(Math.random() * 60);
   document.getElementById('rng-grade').value = state.grade;
   document.getElementById('rng-neon').value = state.neon;
   document.getElementById('rng-grain').value = state.grain;
+  state.capStyle = Math.random() > 0.7 ? 'outline' : 'solid';
+  document.getElementById('sel-capstyle').value = state.capStyle;
+  state.capTilt = -4 + Math.floor(Math.random() * 9);
+  document.getElementById('rng-cap-tilt').value = state.capTilt;
   const captions = ['VICE CITY NIGHTS', 'SUNSET HEIST', 'NEON BOULEVARD', 'PALM & CHROME', 'MIDNIGHT RUN'];
   state.caption = captions[Math.floor(Math.random() * captions.length)];
   document.getElementById('inp-caption').value = state.caption;

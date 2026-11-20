@@ -1,7 +1,7 @@
 @font-face {
-  font-family: "Oswald";
-  src: url("fonts/Oswald.ttf") format("truetype-variations");
-  font-weight: 200 700;
+  font-family: "Archivo Black";
+  src: url("fonts/ArchivoBlack.ttf") format("truetype");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -9,24 +9,24 @@
 * { box-sizing: border-box; }
 
 :root {
-  --ink: #f6ecff;
-  --ink-dim: #c9b8d8;
-  --bg: #12081f;
-  --bg-2: #1d0f31;
-  --card: #221239;
-  --line: #4a2b6b;
+  --ink: #f8f0ff;
+  --ink-dim: #cbb9de;
+  --bg: #0f0722;
+  --bg-2: #1b0e33;
+  --card: #241344;
+  --line: #52307a;
   --pink: #ff2e88;
   --cyan: #22e6ff;
   --amber: #ffb347;
-  --radius: 14px;
+  --radius: 16px;
 }
 
 html, body { margin: 0; padding: 0; }
 
 body {
   background:
-    radial-gradient(900px 500px at 85% -10%, rgba(255, 46, 136, .28), transparent 60%),
-    radial-gradient(700px 500px at -10% 110%, rgba(34, 230, 255, .16), transparent 60%),
+    radial-gradient(900px 500px at 85% -10%, rgba(255, 46, 136, .30), transparent 60%),
+    radial-gradient(700px 500px at -10% 110%, rgba(34, 230, 255, .18), transparent 60%),
     var(--bg);
   color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -41,27 +41,26 @@ body {
   flex-wrap: wrap;
   padding: 18px 24px;
   border-bottom: 1px solid var(--line);
-  background: rgba(18, 8, 31, .72);
+  background: rgba(15, 7, 34, .78);
 }
 
 .brand { display: flex; align-items: center; gap: 14px; }
 .brand-mark {
-  width: 52px; height: 52px;
+  width: 54px; height: 54px;
   display: grid; place-items: center;
-  font-family: "Oswald", sans-serif;
-  font-weight: 700; font-size: 24px; letter-spacing: 1px;
-  color: #12081f;
+  font-family: "Archivo Black", sans-serif;
+  font-size: 22px; letter-spacing: 1px;
+  color: #0f0722;
   background: linear-gradient(135deg, var(--amber), var(--pink) 55%, var(--cyan));
-  border-radius: 12px;
+  border-radius: 14px;
   transform: rotate(-4deg);
-  box-shadow: 0 0 22px rgba(255, 46, 136, .55);
+  box-shadow: 0 0 24px rgba(255, 46, 136, .55);
 }
 .brand h1 {
   margin: 0;
-  font-family: "Oswald", sans-serif;
-  font-weight: 600;
-  font-size: 30px;
-  letter-spacing: 3px;
+  font-family: "Archivo Black", sans-serif;
+  font-size: 28px;
+  letter-spacing: 2px;
   text-transform: uppercase;
 }
 .brand p { margin: 2px 0 0; color: var(--ink-dim); font-size: 13px; }
@@ -106,7 +105,7 @@ button.primary:hover { filter: brightness(1.12); }
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: grab;
   touch-action: none;
   background: #2a1245;
@@ -135,10 +134,9 @@ button.primary:hover { filter: brightness(1.12); }
 }
 .card h2 {
   margin: 0 0 10px;
-  font-family: "Oswald", sans-serif;
-  font-weight: 600;
-  font-size: 19px;
-  letter-spacing: 2px;
+  font-family: "Archivo Black", sans-serif;
+  font-size: 17px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--amber);
 }
