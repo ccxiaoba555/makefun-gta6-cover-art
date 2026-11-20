@@ -1,10 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vice City Nights — GTA 6-style cover maker</title>
-<meta name="description" content="Turn your own photos into a multi-panel Vice City Nights cover in the style of a GTA 6 poster, and export it as a PNG. Fan-made, offline, free.">
+<title>Vice City Nights — GTA 6-style cover art maker</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,102 +11,106 @@
   <div class="brand">
     <span class="brand-mark">VC</span>
     <div>
-      <h1 id="app-title">Vice City Nights</h1>
-      <p class="tagline">Multi-panel GTA 6-style cover maker · GTA VI is out now</p>
+      <h1>Vice City Nights</h1>
+      <p>Fan-made multi-panel cover art maker &middot; GTA VI is out now — make your own poster</p>
     </div>
   </div>
-  <p class="fan-note">Fan-made tribute. Not affiliated with Rockstar Games.</p>
+  <div class="top-actions">
+    <button id="btn-random" type="button" title="Shuffle the look">Shuffle look</button>
+    <button id="btn-export" type="button" class="primary">Export PNG</button>
+  </div>
 </header>
 
-<main class="workspace">
-  <section class="stage-wrap" aria-label="Cover preview">
-    <div class="stage-toolbar">
-      <span id="size-readout">Landscape · 1920 × 1080</span>
-      <span id="panel-readout">Panel 1 selected — drag the photo to reposition</span>
+<main class="layout">
+  <section class="stage-col">
+    <div class="stage-wrap">
+      <canvas id="poster" width="1080" height="1080" aria-label="Cover preview"></canvas>
+      <p class="hint">Drag a panel photo to reposition it. Scroll on a panel to zoom it.</p>
     </div>
-    <canvas id="stage" width="1920" height="1080" aria-label="Live cover preview"></canvas>
-    <div class="panel-chips" id="panel-chips" role="group" aria-label="Choose a panel"></div>
-    <p class="hint">Tip: click a panel to select it, drag inside it to move its photo, scroll over it to zoom. Your photos never leave this machine.</p>
+    <div class="size-row" role="group" aria-label="Export size">
+      <span>Export size</span>
+      <button type="button" data-size="1080x1080" class="size-btn active">1080 &times; 1080</button>
+      <button type="button" data-size="1080x1350" class="size-btn">1080 &times; 1350</button>
+      <button type="button" data-size="1920x1080" class="size-btn">1920 &times; 1080</button>
+    </div>
   </section>
 
-  <aside class="controls" aria-label="Editor controls">
-    <section class="card" id="photos-card">
-      <h2>1 · Your photos</h2>
-      <p class="card-sub">Add 1–3 photos. One photo can fill several panels.</p>
-      <div class="slots" id="photo-slots">
-        <div class="slot" data-slot="0">
-          <label class="slot-drop" for="file-0">Photo 1<span class="slot-name" id="name-0">Boulevard (sample)</span></label>
-          <input type="file" id="file-0" accept="image/*" hidden>
-          <button type="button" class="mini-btn" data-sample="0">Use sample</button>
-        </div>
-        <div class="slot" data-slot="1">
-          <label class="slot-drop" for="file-1">Photo 2<span class="slot-name" id="name-1">Pier (sample)</span></label>
-          <input type="file" id="file-1" accept="image/*" hidden>
-          <button type="button" class="mini-btn" data-sample="1">Use sample</button>
-        </div>
-        <div class="slot" data-slot="2">
-          <label class="slot-drop" for="file-2">Photo 3<span class="slot-name" id="name-2">Empty slot</span></label>
-          <input type="file" id="file-2" accept="image/*" hidden>
-          <button type="button" class="mini-btn" data-sample="2">Use sample</button>
-        </div>
-      </div>
+  <aside class="panel-col">
+    <section class="card">
+      <h2>1 &middot; Your photos</h2>
+      <p class="card-sub">Add 1–3 photos from your machine. They never leave your browser.</p>
+      <label class="file-btn">Add photos
+        <input id="file-input" type="file" accept="image/*" multiple hidden>
+      </label>
+      <div id="photo-strip" class="photo-strip"></div>
+      <p class="card-sub">Click a photo, then click a panel below to fill it. One photo can fill several panels.</p>
+      <div id="panel-slots" class="panel-slots"></div>
     </section>
 
-    <section class="card" id="layout-card">
-      <h2>2 · Layout &amp; grade</h2>
-      <div class="seg" id="layout-seg" role="group" aria-label="Panel layout"></div>
-      <div class="seg" id="theme-seg" role="group" aria-label="Colour grade"></div>
-    </section>
-
-    <section class="card" id="panel-card">
-      <h2>3 · Selected panel</h2>
-      <label class="field">Photo in this panel
-        <select id="panel-photo">
-          <option value="0">Photo 1</option>
-          <option value="1">Photo 2</option>
-          <option value="2">Photo 3</option>
+    <section class="card">
+      <h2>2 &middot; Layout &amp; grade</h2>
+      <label>Poster layout
+        <select id="sel-layout">
+          <option value="diagonal">Diagonal hero — big tilted hero, two stacked panels</option>
+          <option value="triptych">Triptych — three upright panels</option>
+          <option value="stack">Stack — wide hero over a twin strip</option>
         </select>
       </label>
-      <label class="field">Zoom <span class="val" id="zoom-val">100%</span>
-        <input type="range" id="zoom" min="100" max="260" value="100">
+      <label>Sunset grade
+        <input id="rng-grade" type="range" min="0" max="100" value="75">
       </label>
-      <label class="field">Move left / right <span class="val" id="dx-val">0</span>
-        <input type="range" id="dx" min="-40" max="40" value="0">
+      <label>Neon glow
+        <input id="rng-neon" type="range" min="0" max="100" value="80">
       </label>
-      <label class="field">Move up / down <span class="val" id="dy-val">0</span>
-        <input type="range" id="dy" min="-40" max="40" value="0">
+      <label>Film grain
+        <input id="rng-grain" type="range" min="0" max="100" value="35">
+      </label>
+      <label class="check"><input id="chk-skyline" type="checkbox" checked> Draw skyline &amp; palm silhouettes</label>
+      <label class="check"><input id="chk-vignette" type="checkbox" checked> Vignette</label>
+    </section>
+
+    <section class="card">
+      <h2>3 &middot; Caption</h2>
+      <label>Caption text
+        <input id="inp-caption" type="text" value="VICE CITY NIGHTS" maxlength="40">
+      </label>
+      <label>Sub-caption
+        <input id="inp-sub" type="text" value="OUT NOW &middot; GRAND THEFT AUTO VI" maxlength="60">
+      </label>
+      <label>Caption size
+        <input id="rng-cap-size" type="range" min="40" max="160" value="104">
+      </label>
+      <label>Caption height
+        <input id="rng-cap-y" type="range" min="0" max="100" value="82">
+      </label>
+      <label>Letter spacing
+        <input id="rng-tracking" type="range" min="0" max="30" value="8">
       </label>
     </section>
 
-    <section class="card" id="caption-card">
-      <h2>4 · Caption</h2>
-      <label class="field">Main line
-        <input type="text" id="caption" value="VICE CITY" maxlength="24">
+    <section class="card">
+      <h2>4 &middot; Selected panel photo</h2>
+      <label>Zoom
+        <input id="rng-zoom" type="range" min="100" max="260" value="130">
       </label>
-      <label class="field">Second line (optional)
-        <input type="text" id="caption-2" value="NIGHTS" maxlength="24">
+      <label>Shift left / right
+        <input id="rng-ox" type="range" min="-100" max="100" value="0">
       </label>
-      <label class="field">Ribbon line
-        <input type="text" id="sub" value="Grand Theft Auto VI · Out Now" maxlength="48">
+      <label>Shift up / down
+        <input id="rng-oy" type="range" min="-100" max="100" value="0">
       </label>
-      <label class="field">Lettering size <span class="val" id="cap-val">100%</span>
-        <input type="range" id="cap-size" min="70" max="130" value="100">
-      </label>
+      <button id="btn-reset-panel" type="button">Reset this panel</button>
+      <button id="btn-fill-all" type="button">Fill every panel with photo 1</button>
     </section>
 
-    <section class="card export-card" id="export-card">
-      <h2>5 · Export PNG</h2>
-      <div class="seg" id="size-seg" role="group" aria-label="Export size"></div>
-      <button type="button" class="export-btn" id="export-btn">Download PNG</button>
-      <p class="card-sub">Exports the exact cover you see, at full resolution.</p>
-    </section>
+    <p class="disclaimer">Fan-made artwork tool. Not affiliated with, endorsed by, or connected to
+    Rockstar Games or Take-Two Interactive. GTA and Grand Theft Auto are trademarks of
+    Take-Two Interactive. No official artwork, logos, characters, or fonts are used here —
+    the skyline, palms, and lettering are original vector work.</p>
   </aside>
 </main>
 
-<footer class="foot">
-  <p>Display type is Bebas Neue (SIL Open Font License 1.1, see <code>app/fonts/OFL.txt</code>). Skyline, palms, sun and grain are original vector art drawn in canvas. No Rockstar Games logo, artwork, character or font is used. Photos are read on your machine and never uploaded. Works offline — open <code>index.html</code> in desktop Chrome.</p>
-</footer>
-
 <script type="module" src="src/main.js"></script>
+<script type="module" src="src/shots.js"></script>
 </body>
 </html>

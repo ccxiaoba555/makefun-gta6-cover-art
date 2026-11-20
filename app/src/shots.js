@@ -1,58 +1,64 @@
-// Vice City Nights — deterministic screenshot states.
-// `?shot=cover&size=wide&caption=...` renders one fixed cover or editor
-// state so headless Chromium can screenshot the app repeatably. Only used
-// for the entry's own screenshots; the normal app ignores these params.
+// Deterministic screenshot states for headless captures.
+// ?shot=cover&photo=pier&caption=Sunset%20Heist        -> full-bleed cover render
+// ?shot=editor&photo=boulevard&caption=Boulevard%20Queen -> the editor with a photo loaded
+// ?shot=cover&photo=boulevard&layout=triptych            -> cover in another layout
+// Any other query leaves the normal editor alone.
+import { renderCover, DEFAULT_STATE } from './cover.js';
 
-export const SHOT_PRESETS = {
-  cover: {
-    layout: 'nights', theme: 'sunset', size: 'wide',
-    caption: 'VICE CITY', caption2: 'NIGHTS',
-    sub: 'Grand Theft Auto VI · Out Now',
-    captionScale: 1, panelPhoto: [0, 1, 0],
-  },
-  'cover-portrait': {
-    layout: 'nights', theme: 'neon', size: 'portrait',
-    caption: 'VICE CITY', caption2: 'AFTER DARK',
-    sub: 'Grand Theft Auto VI · Out Now',
-    captionScale: 1, panelPhoto: [1, 0, 1],
-  },
-  'cover-square': {
-    layout: 'strip', theme: 'midnight', size: 'square',
-    caption: 'LEONIDA', caption2: 'NIGHTS',
-    sub: 'Grand Theft Auto VI · Out Now',
-    captionScale: 0.95, panelPhoto: [0, 1, 0],
-  },
-  editor: {
-    layout: 'nights', theme: 'sunset', size: 'wide',
-    caption: 'VICE CITY', caption2: 'NIGHTS',
-    sub: 'Grand Theft Auto VI · Out Now',
-    captionScale: 1, panelPhoto: [0, 1, 0],
-  },
-};
+const params = new URLSearchParams(location.search);
+const shot = params.get('shot');
+if (shot === 'cover' || shot === 'editor') {
+  const photoName = params.get('photo') || 'pier';
+  const caption = params.get('caption') || 'Sunset Heist';
+  const layout = params.get('layout') || 'diagonal';
+  const size = params.get('size') || '1080x1080';
+  const [w, h] = size.split('x').map(Number);
 
-// Apply a shot preset (plus any query overrides) to the editor state.
-// `loadSample` loads a bundled sample photo into a slot. Cover shots hide
-// the editor chrome so the screenshot is the exported cover itself.
-export async function applyShot(state, params, loadSample) {
-  const name = params.get('shot') || 'cover';
-  const preset = SHOT_PRESETS[name] || SHOT_PRESETS.cover;
-  state.layout = params.get('layout') || preset.layout;
-  state.theme = params.get('theme') || preset.theme;
-  state.size = params.get('size') || preset.size;
-  state.caption = (params.get('caption') || preset.caption).toUpperCase();
-  state.caption2 = (params.get('caption2') || preset.caption2 || '').toUpperCase();
-  state.sub = params.get('sub') || preset.sub;
-  state.captionScale = Number(params.get('capscale') || preset.captionScale);
-  state.panelPhoto = preset.panelPhoto.slice();
-  state.selectedPanel = 0;
-  // A cover shot shows the bare cover; an editor shot keeps the UI.
-  if (name === 'cover' || name === 'cover-portrait' || name === 'cover-square') {
-    document.body.classList.add('shot-cover');
-  }
-  // Load the samples the panels need (slots 0 and 1 cover every preset).
-  try { await loadSample(0); } catch (e) { /* keep the gradient panel */ }
-  try { await loadSample(1); } catch (e) { /* keep the gradient panel */ }
-  if (state.panelPhoto.includes(2)) {
-    try { await loadSample(2); } catch (e) { /* keep the gradient panel */ }
-  }
+  const img = new Image();
+  img.onload = () => {
+    const state = structuredClone(DEFAULT_STATE);
+    state.layout = layout;
+    state.caption = caption;
+    state.sub = 'OUT NOW · GRAND THEFT AUTO VI';
+    state.capSize = 110;
+    state.capY = 80;
+    if (shot === 'cover') {
+      // Standalone cover: hide the editor chrome, draw the poster edge to edge.
+      document.body.innerHTML = '';
+      document.body.style.margin = '0';
+      document.body.style.background = '#12081f';
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      c.style.display = 'block';
+      c.style.width = '100vw';
+      c.style.height = '100vh';
+      c.style.objectFit = 'contain';
+      document.body.appendChild(c);
+      state.panels = [
+        { photo: 0, zoom: 1.35, ox: 0, oy: 0 },
+        { photo: 0, zoom: 1.5, ox: 0.1, oy: -0.05 },
+        { photo: 0, zoom: 1.4, ox: -0.1, oy: 0.05 },
+      ];
+      renderCover(c, [img], state);
+      document.title = 'cover-ready';
+    } else {
+      // Editor shot: let main.js load, then point every panel at this photo
+      // and set the caption, so the screenshot shows the working editor.
+      const tick = setInterval(() => {
+        const cap = document.getElementById('inp-caption');
+        if (!cap) return;
+        clearInterval(tick);
+        cap.value = caption;
+        cap.dispatchEvent(new Event('input', { bubbles: true }));
+        const sub = document.getElementById('inp-sub');
+        if (sub) {
+          sub.value = 'OUT NOW · GRAND THEFT AUTO VI';
+          sub.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        document.title = 'editor-ready';
+      }, 120);
+    }
+  };
+  img.src = 'samples/' + photoName + '.jpg';
 }

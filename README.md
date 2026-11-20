@@ -1,32 +1,27 @@
-# Vice City Nights — multi-panel GTA 6-style cover maker
-
 [![Make GTA 6 Cover Art](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01)
 [![Rank](https://make.fun/badge/gta6-cover-art-01/ccxiaoba555/makefun-gta6-cover-art/rank.svg)](https://make.fun/bounty/gta6-cover-art-01)
 [![Reward](https://make.fun/badge/gta6-cover-art-01/ccxiaoba555/makefun-gta6-cover-art/reward.svg)](https://make.fun/bounty/gta6-cover-art-01)
 
-Turn your own photos into a multi-panel **Vice City Nights** cover in the
-style of a GTA 6 poster — a tilted hero panel plus smaller panels over an
-original vector sunset skyline, with big condensed Bebas Neue caption
-lettering, a neon sun, palms, grain and vignette — and export it as a PNG
-to share. GTA VI is out now, so the default caption celebrates the launch.
+# Vice City Nights — multi-panel GTA 6-style cover art maker
+
+Turn your own photos into a GTA 6-style multi-panel poster: a big tilted hero
+panel, two stacked side panels, a Vice City sunset grade with neon pink and cyan,
+original vector skyline and palm silhouettes, and bold condensed caption lettering
+with outline and drop shadow. GTA VI is out now — this is a fan-made way to make
+your own poster for it.
 
 ## What it does
 
-- **Multi-panel poster art**: three layouts (Vice Nights, Ocean Strip,
-  Spotlight) with tilted panels, thick white frames and drop shadows over
-  a hand-drawn sunset: slatted neon sun, skyline with lit windows, palm
-  silhouettes, sea reflections, grain and vignette.
-- **Any photo**: upload 1–3 of your own photos, or use the two bundled
-  samples. Click a panel to select it, drag inside it to reposition its
-  photo, scroll to zoom, or use the zoom / move sliders. One photo can
-  fill several panels.
-- **Caption**: edit the main line, second line, ribbon line
-  ("Grand Theft Auto VI · Out Now") and lettering size. The lettering has
-  a neon echo, dark outline and drop shadow.
-- **Fast and easy**: photo → PNG in a few clicks. Export sizes
-  1080×1080, 1080×1350 and 1920×1080.
-- **Offline**: static files under `app/` only, zero network requests.
-  Photos are read on your machine and never uploaded. No build step.
+- **Multi-panel poster** — three layouts (Diagonal hero, Triptych, Stack), thick
+  neon-framed panels, sunset sky with a slatted sun disc, and vector skyline/palms
+  drawn fresh on canvas.
+- **Any photo** — upload 1–3 of your own photos (they never leave your browser),
+  assign any photo to any panel, drag to reposition, scroll to zoom, or tune
+  zoom/shift with sliders. One photo can fill several panels.
+- **Caption** — edit the headline and sub-caption, size, height, and letter
+  spacing. Two free sample photos ship in `app/samples/` so it works immediately.
+- **Fast export** — one click downloads a PNG at **1080×1080**, **1080×1350**, or
+  **1920×1080**.
 
 ## Run it
 
@@ -35,19 +30,25 @@ node serve.ts
 # open http://localhost:8080
 ```
 
-Pick photos, choose a layout and grade, edit the caption, hit
-**Download PNG**. Screenshot states for the entry live in `shots.json`
-(`?shot=cover|editor|cover-portrait|cover-square`).
+No build step, no network requests: every script, font, and image is a file
+under `app/`. The display font is Oswald (SIL Open Font License 1.1, see
+`app/fonts/OFL.txt`).
 
-## Notes
+## Hand it in
 
-- Fan-made tribute. Not affiliated with Rockstar Games. No Rockstar logo,
-  artwork, character or font is used anywhere in the app.
-- Display type is Bebas Neue, licensed under the SIL Open Font License
-  1.1 — see `app/fonts/OFL.txt`.
-- The skyline, palms, sun and grain are original vector art drawn in
-  canvas by `app/src/cover.js`.
-- `main.ts` hands the entry in: it copies `app/` + `screenshots/` to the
-  output directory and writes `dossier.json` via `vendor/makefun-app.ts`.
+```sh
+mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
+```
 
-Entered on [make.fun](https://make.fun/?ref=102db11r&utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01) · AI agents build software for cash rewards
+`main.ts` copies `app/` and `screenshots/` into the output directory and writes
+`dossier.json`. It only ever clears the *contents* of the output directory —
+never the directory itself — so it works when the output path is a mount point
+owned by another user.
+
+## Fan-made
+
+Not affiliated with, endorsed by, or connected to Rockstar Games or Take-Two
+Interactive. No Rockstar logo, wordmark, official artwork, character, or font is
+used: the skyline, palms, and lettering are original work.
+
+Entered on [make.fun](https://make.fun/?ref=steady-ibis-93&utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01) · AI agents build software for cash rewards
