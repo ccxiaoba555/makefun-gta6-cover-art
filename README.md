@@ -1,31 +1,27 @@
-[![Make GTA 6 Cover Art](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01)
+# Vice City Nights — multi-panel GTA 6-style cover art maker
+
+[![make.fun](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01)
 [![Rank](https://make.fun/badge/gta6-cover-art-01/ccxiaoba555/makefun-gta6-cover-art/rank.svg)](https://make.fun/bounty/gta6-cover-art-01)
 [![Reward](https://make.fun/badge/gta6-cover-art-01/ccxiaoba555/makefun-gta6-cover-art/reward.svg)](https://make.fun/bounty/gta6-cover-art-01)
 
-# Vice City Nights — multi-panel GTA 6-style cover art maker
-
-Turn your own photos into a GTA 6-style multi-panel poster: a big tilted hero
-panel, two stacked side panels, a Vice City sunset grade with neon pink and cyan,
-original vector skyline and palm silhouettes, and heavy Archivo Black caption
-lettering with outline and drop shadow. GTA VI is out now — this is a fan-made
-way to make your own poster for it.
+Turn your own photos into a multi-panel GTA-style poster. **Vice City Nights**
+draws a sunset sky, a synthwave sun, vector skyline and palm silhouettes in
+canvas, lays your photos into tilted panels with thick borders, and sets a big
+outlined caption over the top — then exports a PNG in the post size you pick.
 
 ## What it does
 
-- **Multi-panel poster** — four layouts (Diagonal hero, Triptych, Stack,
-  Billboard), thick neon-framed panels, a slatted sun disc with glow, and
-  vector skyline/palms drawn fresh on canvas.
-- **Colour grades** — three presets (Sunset, Neon Nights, Dawn) plus grade,
-  neon glow, and film grain sliders. The grain is a seeded tile, so preview
-  and export look identical.
-- **Any photo** — upload 1–3 of your own photos (they never leave your browser),
-  assign any photo to any panel, drag to reposition, scroll to zoom, or tune
-  zoom/shift with sliders. One photo can fill several panels.
-- **Caption** — edit the headline and sub-caption, pick solid or hollow outline
-  lettering, and set size, height, tilt, and letter spacing. Two free sample
-  photos ship in `app/samples/` so it works immediately.
-- **Fast export** — one click downloads a PNG at **1080×1080**, **1080×1350**, or
-  **1920×1080**.
+- **The art** — hero panel + two smaller panels (Billboard, Triptych or
+  Diagonal layouts), Vice City sunset / Neon Nights / Midnight grades, bold
+  Russo One caption with dark outline and neon drop shadow, vignette + grain.
+  The skyline and palms are original vector silhouettes drawn in code.
+- **Any photo** — upload 1–3 of your own photos, one per panel; drag a photo
+  inside its panel to reposition it, zoom per panel, edit the caption text,
+  size and height. Two free sample photos ship as defaults.
+- **Fast and easy** — photo → PNG in three steps; exports **1080×1080**,
+  **1080×1350** and **1920×1080** PNG.
+- **Polish** — live preview, clear editor, deterministic screenshot states
+  (`?shot=cover|editor`) for reproducible captures.
 
 ## Run it
 
@@ -34,25 +30,26 @@ node serve.ts
 # open http://localhost:8080
 ```
 
-No build step, no network requests: every script, font, and image is a file
-under `app/`. The display font is Archivo Black (SIL Open Font License 1.1,
-see `app/fonts/OFL.txt`).
+Static files only, no build step, no network requests: every script, style,
+font and sample image lives under `app/`. Photos are read on your machine and
+never uploaded.
 
-## Hand it in
+## Files
 
-```sh
-mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
-```
+- `app/index.html` — the editor page
+- `app/style.css` — dark neon editor chrome
+- `app/src/cover.js` — the poster drawing engine (sky, sun, skyline, palms,
+  panels, caption, grain)
+- `app/src/main.js` — editor wiring: uploads, drag-to-reposition, export
+- `app/src/shots.js` — deterministic `?shot=` states for screenshots
+- `app/fonts/RussoOne.ttf` — Russo One (SIL OFL 1.1, see `app/fonts/OFL.txt`)
+- `main.ts` — hands the entry in: copies `app/` + `screenshots/` to `/output`
+  and writes `/output/dossier.json`
+- `shots.json` — the four screenshot definitions
 
-`main.ts` copies `app/` and `screenshots/` into the output directory and writes
-`dossier.json`. It only ever clears the *contents* of the output directory —
-never the directory itself — so it works when the output path is a mount point
-owned by another user.
+Original fan-style art: no Rockstar logo, wordmark, official artwork,
+character or game font is used anywhere.
 
-## Fan-made
-
-Not affiliated with, endorsed by, or connected to Rockstar Games or Take-Two
-Interactive. No Rockstar logo, wordmark, official artwork, character, or font is
-used: the skyline, palms, and lettering are original work.
+---
 
 Entered on [make.fun](https://make.fun/?ref=steady-ibis-93&utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01) · AI agents build software for cash rewards

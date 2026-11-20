@@ -1,67 +1,49 @@
-// Vice City Nights — local dev server for app/ (Node 22, standard library only).
-// `node serve.ts` serves app/ on http://localhost:8080 (or --port <n>).
-// It only serves files inside app/, sends the right MIME type for each, and
-// never writes anything: a convenience for trying the cover maker locally.
-import { createReadStream, statSync } from 'node:fs';
+// Vice City Nights — local dev server.
+// Serves app/ as static files on http://localhost:8080, no build step.
+// Node standard library only; run with `node serve.ts`.
+
 import { createServer } from 'node:http';
-import { extname, join, normalize, resolve, sep } from 'node:path';
+import { createReadStream, existsSync, statSync } from 'node:fs';
+import { join, extname, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = resolve(fileURLToPath(new URL('./app', import.meta.url)));
-const args = process.argv.slice(2);
-const portArg = args.indexOf('--port');
-const wanted = portArg === -1 ? 8080 : Number(args[portArg + 1]);
-const port = Number.isInteger(wanted) && wanted > 0 && wanted < 65536 ? wanted : 8080;
+const appDir = join(fileURLToPath(new URL('.', import.meta.url)), 'app');
+const port = Number(process.env.PORT || 8080);
 
-const MIME = {
+const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
+  '.png': 'image/png',
   '.webp': 'image/webp',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2',
-  '.woff': 'font/woff',
   '.ttf': 'font/ttf',
-  '.otf': 'font/otf',
-  '.txt': 'text/plain; charset=utf-8',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.svg': 'image/svg+xml',
 };
 
-createServer((req, res) => {
-  let pathname;
-  try {
-    pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
-  } catch {
-    res.writeHead(400).end('bad request');
+const server = createServer((req, res) => {
+  const rawPath = decodeURIComponent(new URL(req.url || '/', 'http://localhost').pathname);
+  const safePath = normalize(rawPath).replace(/^(\.\.[/\\])+/, '');
+  const filePath = join(appDir, safePath === '/' ? 'index.html' : safePath);
+  if (!filePath.startsWith(appDir + sep) && filePath !== appDir) {
+    res.writeHead(403, { 'content-type': 'text/plain' });
+    res.end('Forbidden');
     return;
   }
-  if (pathname.endsWith('/')) pathname += 'index.html';
-  const file = resolve(join(root, normalize(pathname)));
-  if (file !== root && !file.startsWith(root + sep)) {
-    res.writeHead(403).end('forbidden');
+  if (!existsSync(filePath) || !statSync(filePath).isFile()) {
+    res.writeHead(404, { 'content-type': 'text/plain' });
+    res.end('Not found');
     return;
   }
-  let size;
-  try {
-    const st = statSync(file);
-    if (!st.isFile()) throw new Error('not a file');
-    size = st.size;
-  } catch {
-    res.writeHead(404).end('not found');
-    return;
-  }
-  res.writeHead(200, {
-    'content-type': MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
-    'content-length': size,
-    'cache-control': 'no-store',
-  });
-  createReadStream(file).pipe(res);
-}).listen(port, '127.0.0.1', () => {
-  console.log(`Vice City Nights is on http://localhost:${port}`);
+  res.writeHead(200, { 'content-type': MIME[extname(filePath).toLowerCase()] || 'application/octet-stream' });
+  createReadStream(filePath).pipe(res);
+});
+
+server.listen(port, () => {
+  console.log(`Vice City Nights serving app/ at http://localhost:${port}`);
 });

@@ -1,133 +1,116 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vice City Nights — GTA 6-style cover art maker</title>
+<title>Vice City Nights — GTA-style cover art maker</title>
+<meta name="description" content="Turn your photos into a multi-panel GTA-style poster: Vice City sunset grade, bold outlined caption, export as PNG in three post sizes. Works offline.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="topbar">
+<header class="top">
   <div class="brand">
-    <span class="brand-mark">VC</span>
-    <div>
-      <h1>Vice City Nights</h1>
-      <p>Fan-made multi-panel cover art maker &middot; GTA VI is out now — make your own poster</p>
-    </div>
+    <h1>VICE CITY <span>NIGHTS</span></h1>
+    <p>Multi-panel cover art maker — your photos, a sunset grade, one big caption.</p>
   </div>
-  <div class="top-actions">
-    <button id="btn-random" type="button" title="Shuffle the look">Shuffle look</button>
-    <button id="btn-export" type="button" class="primary">Export PNG</button>
-  </div>
+  <ol class="steps">
+    <li><b>1</b> Drop in 1–3 photos</li>
+    <li><b>2</b> Drag, zoom, write your caption</li>
+    <li><b>3</b> Download the PNG</li>
+  </ol>
 </header>
 
 <main class="layout">
-  <section class="stage-col">
-    <div class="stage-wrap">
-      <canvas id="poster" width="1080" height="1080" aria-label="Cover preview"></canvas>
-      <p class="hint">Drag a panel photo to reposition it. Scroll on a panel to zoom it.</p>
-    </div>
-    <div class="size-row" role="group" aria-label="Export size">
-      <span>Export size</span>
-      <button type="button" data-size="1080x1080" class="size-btn active">1080 &times; 1080</button>
-      <button type="button" data-size="1080x1350" class="size-btn">1080 &times; 1350</button>
-      <button type="button" data-size="1920x1080" class="size-btn">1920 &times; 1080</button>
-    </div>
+  <section class="preview" aria-label="Live poster preview">
+    <canvas id="stage" width="960" height="540"></canvas>
+    <p id="status" class="status" role="status">Loading sample photos…</p>
   </section>
 
-  <aside class="panel-col">
-    <section class="card">
-      <h2>1 &middot; Your photos</h2>
-      <p class="card-sub">Add 1–3 photos from your machine. They never leave your browser.</p>
-      <label class="file-btn">Add photos
-        <input id="file-input" type="file" accept="image/*" multiple hidden>
-      </label>
-      <div id="photo-strip" class="photo-strip"></div>
-      <p class="card-sub">Click a photo, then click a panel below to fill it. One photo can fill several panels.</p>
-      <div id="panel-slots" class="panel-slots"></div>
+  <aside class="controls" aria-label="Poster controls">
+    <section class="group">
+      <h2>Photos — one per panel</h2>
+      <p class="hint">Photos stay on your machine; nothing is uploaded. Drag a photo
+        on the poster to move it inside its panel.</p>
+      <div class="slot">
+        <label for="file0">Panel 1 — hero</label>
+        <input type="file" id="file0" accept="image/*">
+        <div class="slot-row">
+          <button type="button" id="sample0" class="mini">Use sample</button>
+          <label class="zoom-label" for="zoom0">Zoom <span id="zoomVal0">100%</span></label>
+          <input type="range" id="zoom0" min="1" max="2.5" step="0.05" value="1">
+        </div>
+      </div>
+      <div class="slot">
+        <label for="file1">Panel 2 — top right</label>
+        <input type="file" id="file1" accept="image/*">
+        <div class="slot-row">
+          <button type="button" id="sample1" class="mini">Use sample</button>
+          <label class="zoom-label" for="zoom1">Zoom <span id="zoomVal1">100%</span></label>
+          <input type="range" id="zoom1" min="1" max="2.5" step="0.05" value="1">
+        </div>
+      </div>
+      <div class="slot">
+        <label for="file2">Panel 3 — bottom right</label>
+        <input type="file" id="file2" accept="image/*">
+        <div class="slot-row">
+          <button type="button" id="sample2" class="mini">Use sample</button>
+          <label class="zoom-label" for="zoom2">Zoom <span id="zoomVal2">100%</span></label>
+          <input type="range" id="zoom2" min="1" max="2.5" step="0.05" value="1">
+        </div>
+      </div>
     </section>
 
-    <section class="card">
-      <h2>2 &middot; Layout &amp; grade</h2>
-      <label>Poster layout
-        <select id="sel-layout">
-          <option value="diagonal">Diagonal hero — big tilted hero, two stacked panels</option>
-          <option value="triptych">Triptych — three upright panels</option>
-          <option value="stack">Stack — wide hero over a twin strip</option>
-          <option value="billboard">Billboard — wide hero, caption band, twin panels</option>
-        </select>
-      </label>
-      <label>Colour grade
-        <select id="sel-preset">
-          <option value="sunset">Sunset — orange-pink Vice City dusk</option>
-          <option value="neon">Neon Nights — purple and cyan after dark</option>
-          <option value="dawn">Dawn — soft rose and gold morning</option>
-        </select>
-      </label>
-      <label>Sunset grade
-        <input id="rng-grade" type="range" min="0" max="100" value="75">
-      </label>
-      <label>Neon glow
-        <input id="rng-neon" type="range" min="0" max="100" value="80">
-      </label>
-      <label>Film grain
-        <input id="rng-grain" type="range" min="0" max="100" value="35">
-      </label>
-      <label class="check"><input id="chk-skyline" type="checkbox" checked> Draw skyline &amp; palm silhouettes</label>
-      <label class="check"><input id="chk-vignette" type="checkbox" checked> Vignette</label>
+    <section class="group">
+      <h2>Caption</h2>
+      <label for="captionInput">Main caption</label>
+      <input type="text" id="captionInput" value="VICE CITY" maxlength="24" autocomplete="off">
+      <label for="subInput">Ribbon text</label>
+      <input type="text" id="subInput" value="NIGHTS" maxlength="24" autocomplete="off">
+      <label for="sizeRange">Caption size <span id="sizeVal">100%</span></label>
+      <input type="range" id="sizeRange" min="0.6" max="1.5" step="0.05" value="1">
+      <label for="yRange">Caption height <span id="yVal">83%</span></label>
+      <input type="range" id="yRange" min="0.62" max="0.92" step="0.01" value="0.83">
     </section>
 
-    <section class="card">
-      <h2>3 &middot; Caption</h2>
-      <label>Caption text
-        <input id="inp-caption" type="text" value="VICE CITY NIGHTS" maxlength="40">
-      </label>
-      <label>Sub-caption
-        <input id="inp-sub" type="text" value="OUT NOW &middot; GRAND THEFT AUTO VI" maxlength="60">
-      </label>
-      <label>Caption style
-        <select id="sel-capstyle">
-          <option value="solid">Solid — white fill, dark outline</option>
-          <option value="outline">Outline — hollow neon letters</option>
-        </select>
-      </label>
-      <label>Caption size
-        <input id="rng-cap-size" type="range" min="40" max="160" value="104">
-      </label>
-      <label>Caption height
-        <input id="rng-cap-y" type="range" min="0" max="100" value="82">
-      </label>
-      <label>Caption tilt
-        <input id="rng-cap-tilt" type="range" min="-8" max="8" value="-2">
-      </label>
-      <label>Letter spacing
-        <input id="rng-tracking" type="range" min="0" max="30" value="8">
-      </label>
+    <section class="group">
+      <h2>Look</h2>
+      <div class="btn-row" role="group" aria-label="Colour grade">
+        <button type="button" data-grade="sunset" class="pill active">Sunset</button>
+        <button type="button" data-grade="neon" class="pill">Neon Nights</button>
+        <button type="button" data-grade="midnight" class="pill">Midnight</button>
+      </div>
+      <div class="btn-row" role="group" aria-label="Panel layout">
+        <button type="button" data-layout="billboard" class="pill active">Billboard</button>
+        <button type="button" data-layout="triptych" class="pill">Triptych</button>
+        <button type="button" data-layout="diagonal" class="pill">Diagonal</button>
+      </div>
+      <label for="ratioSelect">Preview ratio</label>
+      <select id="ratioSelect">
+        <option value="wide" selected>Wide 1920 × 1080</option>
+        <option value="square">Square 1080 × 1080</option>
+        <option value="portrait">Portrait 1080 × 1350</option>
+      </select>
     </section>
 
-    <section class="card">
-      <h2>4 &middot; Selected panel photo</h2>
-      <label>Zoom
-        <input id="rng-zoom" type="range" min="100" max="260" value="130">
-      </label>
-      <label>Shift left / right
-        <input id="rng-ox" type="range" min="-100" max="100" value="0">
-      </label>
-      <label>Shift up / down
-        <input id="rng-oy" type="range" min="-100" max="100" value="0">
-      </label>
-      <button id="btn-reset-panel" type="button">Reset this panel</button>
-      <button id="btn-fill-all" type="button">Fill every panel with photo 1</button>
+    <section class="group">
+      <h2>Export PNG</h2>
+      <div class="btn-row" role="group" aria-label="Export size">
+        <button type="button" data-export="square" class="pill">1080²</button>
+        <button type="button" data-export="portrait" class="pill">1080×1350</button>
+        <button type="button" data-export="wide" class="pill active">1920×1080</button>
+      </div>
+      <button type="button" id="downloadBtn" class="big">Download PNG</button>
+      <button type="button" id="resetBtn" class="ghost">Reset to sample poster</button>
     </section>
-
-    <p class="disclaimer">Fan-made artwork tool. Not affiliated with, endorsed by, or connected to
-    Rockstar Games or Take-Two Interactive. GTA and Grand Theft Auto are trademarks of
-    Take-Two Interactive. No official artwork, logos, characters, or fonts are used here —
-    the skyline, palms, and lettering are original vector work.</p>
   </aside>
 </main>
 
-<script type="module" src="src/main.js"></script>
-<script type="module" src="src/shots.js"></script>
+<footer class="foot">
+  <p>Original fan-style art drawn in canvas — skyline and palms are vector
+    silhouettes, the lettering is Russo One (SIL OFL). No Rockstar logo,
+    artwork or font. Works fully offline; your photos never leave your machine.</p>
+</footer>
+
+<script type="module" src="./src/main.js"></script>
 </body>
 </html>

@@ -1,81 +1,73 @@
 // Deterministic screenshot states for headless captures.
-// ?shot=cover&photo=pier&caption=Sunset%20Heist        -> full-bleed cover render
-// ?shot=editor&photo=boulevard&caption=Boulevard%20Queen -> the editor with a photo loaded
-// ?shot=cover&photo=boulevard&layout=billboard          -> cover in the billboard layout
-// Extra params: preset=sunset|neon|dawn, capstyle=solid|outline, tilt=<deg>.
-// Any other query leaves the normal editor alone.
-import { renderCover, DEFAULT_STATE } from './cover.js';
+// The page reads ?shot=... and renders one fixed state, so every
+// screenshot is reproducible: same photos, same caption, same grade.
+//
+//   ?shot=cover&ratio=landscape   full-bleed exported-style cover
+//   ?shot=cover&ratio=portrait    tall cover (1080x1350 look)
+//   ?shot=cover&ratio=square      square cover (1080x1080 look)
+//   ?shot=editor                  the editor with sample photos loaded
 
-const params = new URLSearchParams(location.search);
-const shot = params.get('shot');
-if (shot === 'cover' || shot === 'editor') {
-  const photoName = params.get('photo') || 'pier';
-  const caption = params.get('caption') || 'Sunset Heist';
-  const layout = params.get('layout') || 'diagonal';
-  const preset = params.get('preset') || 'sunset';
-  const capStyle = params.get('capstyle') || 'solid';
-  const tilt = Number(params.get('tilt') ?? -2);
-  const size = params.get('size') || '1080x1080';
-  const [w, h] = size.split('x').map(Number);
+export const SHOT_RATIOS = {
+  landscape: { w: 1920, h: 1080 },
+  portrait: { w: 1080, h: 1350 },
+  square: { w: 1080, h: 1080 },
+};
 
-  const img = new Image();
-  img.onload = () => {
-    const state = structuredClone(DEFAULT_STATE);
-    state.layout = layout;
-    state.preset = preset;
-    state.capStyle = capStyle;
-    state.capTilt = Number.isFinite(tilt) ? tilt : -2;
-    state.caption = caption;
-    state.sub = 'OUT NOW · GRAND THEFT AUTO VI';
-    state.capSize = 110;
-    state.capY = layout === 'billboard' ? 62 : 80;
-    if (shot === 'cover') {
-      // Standalone cover: hide the editor chrome, draw the poster edge to edge.
-      document.body.innerHTML = '';
-      document.body.style.margin = '0';
-      document.body.style.background = '#0f0722';
-      const c = document.createElement('canvas');
-      c.width = w;
-      c.height = h;
-      c.style.display = 'block';
-      c.style.width = '100vw';
-      c.style.height = '100vh';
-      c.style.objectFit = 'contain';
-      document.body.appendChild(c);
-      state.panels = [
-        { photo: 0, zoom: 1.35, ox: 0, oy: 0 },
-        { photo: 0, zoom: 1.5, ox: 0.1, oy: -0.05 },
-        { photo: 0, zoom: 1.4, ox: -0.1, oy: 0.05 },
-      ];
-      renderCover(c, [img], state);
-      document.title = 'cover-ready';
-    } else {
-      // Editor shot: let main.js load, then set the caption and grade so the
-      // screenshot shows the working editor with a photo in every panel.
-      const tick = setInterval(() => {
-        const cap = document.getElementById('inp-caption');
-        if (!cap) return;
-        clearInterval(tick);
-        cap.value = caption;
-        cap.dispatchEvent(new Event('input', { bubbles: true }));
-        const sub = document.getElementById('inp-sub');
-        if (sub) {
-          sub.value = 'OUT NOW · GRAND THEFT AUTO VI';
-          sub.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        const lay = document.getElementById('sel-layout');
-        if (lay) {
-          lay.value = layout;
-          lay.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        const pre = document.getElementById('sel-preset');
-        if (pre) {
-          pre.value = preset;
-          pre.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        document.title = 'editor-ready';
-      }, 120);
-    }
+export function parseShot(search) {
+  const params = new URLSearchParams(search || '');
+  const shot = params.get('shot') || '';
+  const ratio = params.get('ratio') || 'landscape';
+  const layout = params.get('layout') || '';
+  const grade = params.get('grade') || '';
+  return { shot, ratio, layout, grade };
+}
+
+export function isShotMode(search) {
+  return parseShot(search).shot !== '';
+}
+
+// Fixed cover states used by the screenshots. The caption differs per
+// ratio only in size/placement, so each exported size reads well.
+export function shotCoverState(ratio, layout, grade) {
+  const base = {
+    caption: 'VICE CITY',
+    subcaption: 'NIGHTS',
+    captionSize: 1,
+    captionY: 0.83,
+    grade: grade || 'sunset',
+    layout: layout || 'billboard',
+    panels: [
+      { zoom: 1.05, ox: 0, oy: 0 },
+      { zoom: 1.1, ox: 0, oy: -0.04 },
+      { zoom: 1, ox: 0.03, oy: 0 },
+    ],
   };
-  img.src = 'samples/' + photoName + '.jpg';
+  if (ratio === 'portrait') {
+    base.captionSize = 0.92;
+    base.captionY = 0.86;
+    base.layout = layout || 'billboard';
+  }
+  if (ratio === 'square') {
+    base.captionSize = 0.95;
+    base.captionY = 0.84;
+    base.layout = layout || 'triptych';
+    base.grade = grade || 'neon';
+  }
+  return base;
+}
+
+export function shotEditorState() {
+  return {
+    caption: 'VICE CITY',
+    subcaption: 'NIGHTS',
+    captionSize: 1,
+    captionY: 0.83,
+    grade: 'sunset',
+    layout: 'billboard',
+    panels: [
+      { zoom: 1.05, ox: 0, oy: 0 },
+      { zoom: 1.1, ox: 0, oy: -0.04 },
+      { zoom: 1, ox: 0.03, oy: 0 },
+    ],
+  };
 }
