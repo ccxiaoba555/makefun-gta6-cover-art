@@ -1,4 +1,4 @@
-// Vice City Nights — local dev server.
+// Vice City Nights v7 — local dev server.
 // Serves app/ as static files on http://localhost:8080, no build step.
 // Node standard library only; run with `node serve.ts`.
 
@@ -45,5 +45,6 @@ const server = createServer((req, res) => {
 });
 
 server.listen(port, () => {
-  console.log(`Vice City Nights serving app/ at http://localhost:${port}`);
+  console.log(`Vice City Nights v7 serving app/ at http://localhost:${port}`);
+  console.log(`Shots: http://localhost:${port}/?shot=cover&ratio=landscape | ?shot=editor&face=1 | ?shot=cover&ratio=portrait | ?shot=cover&ratio=square&grade=neon`);
 });

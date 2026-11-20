@@ -11,7 +11,7 @@
 <header class="top">
   <div class="brand">
     <h1>VICE CITY <span>NIGHTS</span></h1>
-    <p>Multi-panel cover art maker — your photos, a sunset grade, one big caption.</p>
+    <p>Your photos become framed crime-epic key art.</p>
   </div>
   <ol class="steps">
     <li><b>1</b> Drop in 1–3 photos</li>
@@ -23,12 +23,13 @@
 <main class="layout">
   <section class="preview" aria-label="Live poster preview">
     <canvas id="stage" width="960" height="540"></canvas>
+    <div id="dropHint" class="drop-hint" hidden>Drop your photo here</div>
     <p id="status" class="status" role="status">Loading sample photos…</p>
   </section>
 
   <aside class="controls" aria-label="Poster controls">
     <section class="group">
-      <h2>Photos — one per panel</h2>
+      <h2>Your photos — make them the cover</h2>
       <p class="hint">Photos stay on your machine; nothing is uploaded. Drag a photo
         on the poster to move it inside its panel.</p>
       <div class="slot">
@@ -36,6 +37,8 @@
         <input type="file" id="file0" accept="image/*">
         <div class="slot-row">
           <button type="button" id="sample0" class="mini">Use sample</button>
+          <button type="button" id="face0" class="mini">Face crop</button>
+          <button type="button" id="closeup0" class="mini">Close-up</button>
           <label class="zoom-label" for="zoom0">Zoom <span id="zoomVal0">100%</span></label>
           <input type="range" id="zoom0" min="1" max="2.5" step="0.05" value="1">
         </div>
@@ -45,6 +48,7 @@
         <input type="file" id="file1" accept="image/*">
         <div class="slot-row">
           <button type="button" id="sample1" class="mini">Use sample</button>
+          <button type="button" id="face1" class="mini">Face crop</button>
           <label class="zoom-label" for="zoom1">Zoom <span id="zoomVal1">100%</span></label>
           <input type="range" id="zoom1" min="1" max="2.5" step="0.05" value="1">
         </div>
@@ -54,6 +58,7 @@
         <input type="file" id="file2" accept="image/*">
         <div class="slot-row">
           <button type="button" id="sample2" class="mini">Use sample</button>
+          <button type="button" id="face2" class="mini">Face crop</button>
           <label class="zoom-label" for="zoom2">Zoom <span id="zoomVal2">100%</span></label>
           <input type="range" id="zoom2" min="1" max="2.5" step="0.05" value="1">
         </div>
@@ -78,6 +83,11 @@
         <button type="button" data-grade="sunset" class="pill active">Sunset</button>
         <button type="button" data-grade="neon" class="pill">Neon Nights</button>
         <button type="button" data-grade="midnight" class="pill">Midnight</button>
+        <button type="button" data-grade="vicegold" class="pill">Vice Gold</button>
+        <button type="button" data-grade="rose" class="pill">Rose Drive</button>
+        <button type="button" data-grade="acid" class="pill">Acid Lime</button>
+        <button type="button" data-grade="bayside" class="pill">Bayside</button>
+        <button type="button" data-grade="chrome" class="pill">Chrome</button>
       </div>
       <div class="btn-row" role="group" aria-label="Panel layout">
         <button type="button" data-layout="billboard" class="pill active">Billboard</button>
@@ -90,6 +100,21 @@
         <option value="square">Square 1080 × 1080</option>
         <option value="portrait">Portrait 1080 × 1350</option>
       </select>
+    </section>
+
+    <section class="group">
+      <h2>Poster details</h2>
+      <p class="hint">Seal, billing block and callouts — the small print that makes
+        it look like real key art.</p>
+      <label class="check-row"><input type="checkbox" id="sealChk" checked> Seal — round Vice City Nights stamp</label>
+      <label class="check-row"><input type="checkbox" id="billingChk" checked> Billing block — tiny credits along the bottom</label>
+      <label class="check-row"><input type="checkbox" id="calloutsChk" checked> Callouts — labelled pointers on the panels</label>
+      <label for="callout1Input">Callout 1 — hero panel</label>
+      <input type="text" id="callout1Input" value="LEONIDA" maxlength="24" autocomplete="off">
+      <label for="callout2Input">Callout 2 — top right panel</label>
+      <input type="text" id="callout2Input" value="EST. 2026" maxlength="24" autocomplete="off">
+      <label for="billingInput">Billing text</label>
+      <input type="text" id="billingInput" value="A VICE CITY NIGHTS POSTER  •  STARRING YOUR PHOTOS  •  MUSIC BY THE SUNSET DRIVE  •  © 2026 LEONIDA PICTURES" maxlength="90" autocomplete="off">
     </section>
 
     <section class="group">

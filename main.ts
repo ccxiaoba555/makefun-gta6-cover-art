@@ -1,4 +1,4 @@
-// Vice City Nights — entry program (make.fun gta6-cover-art-01).
+// Vice City Nights v7 — entry program (make.fun gta6-cover-art-01).
 // Copies app/ and screenshots/ into the output directory and writes
 // /output/dossier.json with buildDossier from vendor/makefun-app.ts.
 // Node standard library only; runs as `node main.ts`, no build step.
@@ -51,7 +51,7 @@ function main(): void {
     app_max_bytes: 50331648,
   });
   writeFileSync(join(outputDir, 'dossier.json'), dossier);
-  console.log(`wrote ${outputDir}/dossier.json (${dossier.length} bytes)`);
+  console.log(`Vice City Nights v7 wrote ${outputDir}/dossier.json (${dossier.length} bytes)`);
 }
 
 main();

@@ -19,7 +19,8 @@ export function parseShot(search) {
   const ratio = params.get('ratio') || 'landscape';
   const layout = params.get('layout') || '';
   const grade = params.get('grade') || '';
-  return { shot, ratio, layout, grade };
+  const face = params.get('face') || '';
+  return { shot, ratio, layout, grade, face };
 }
 
 export function isShotMode(search) {
@@ -28,6 +29,19 @@ export function isShotMode(search) {
 
 // Fixed cover states used by the screenshots. The caption differs per
 // ratio only in size/placement, so each exported size reads well.
+// v7 poster details (seal / billing block / callouts) — same defaults as
+// defaultState() in cover.js, so shot renders match the editor.
+function shotDetails() {
+  return {
+    seal: true,
+    billing: true,
+    callouts: true,
+    callout1: 'LEONIDA',
+    callout2: 'EST. 2026',
+    billing: 'A VICE CITY NIGHTS POSTER  •  STARRING YOUR PHOTOS  •  MUSIC BY THE SUNSET DRIVE  •  © 2026 LEONIDA PICTURES',
+  };
+}
+
 export function shotCoverState(ratio, layout, grade) {
   const base = {
     caption: 'VICE CITY',
@@ -36,6 +50,7 @@ export function shotCoverState(ratio, layout, grade) {
     captionY: 0.83,
     grade: grade || 'sunset',
     layout: layout || 'billboard',
+    details: shotDetails(),
     panels: [
       { zoom: 1.05, ox: 0, oy: 0 },
       { zoom: 1.1, ox: 0, oy: -0.04 },
@@ -64,6 +79,7 @@ export function shotEditorState() {
     captionY: 0.83,
     grade: 'sunset',
     layout: 'billboard',
+    details: shotDetails(),
     panels: [
       { zoom: 1.05, ox: 0, oy: 0 },
       { zoom: 1.1, ox: 0, oy: -0.04 },

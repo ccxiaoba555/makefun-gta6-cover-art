@@ -237,8 +237,48 @@ select { margin-top: 4px; }
   font-size: 12px;
 }
 
+/* v7 — poster details controls + drag-and-drop overlay. */
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.check-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--pink);
+  cursor: pointer;
+}
+
+.preview { position: relative; }
+
+.drop-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--cyan);
+  border-radius: 10px;
+  background: rgba(13, 3, 34, 0.82);
+  color: var(--cyan);
+  font-family: "Russo One", "Arial Black", sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.drop-hint[hidden] { display: none; }
+
 /* Full-bleed cover shot: hide the editor chrome, canvas fills the window. */
 body.shot-cover { background: #0d0322; }
+body.shot-cover #dropHint { display: none; }
 body.shot-cover .top,
 body.shot-cover .controls,
 body.shot-cover .foot,

@@ -34,6 +34,56 @@ export const GRADES = {
     accent2: '#7df9ff',
     band: 'rgba(2, 6, 23, 0.78)',
   },
+  vicegold: {
+    sky: ['#1a0b2e', '#e8a33d'],
+    skyStops: [[0, '#1a0b2e'], [0.45, '#7a4a12'], [0.7, '#e8a33d'], [1, '#ffe9a8']],
+    sun: ['#fff3c4', '#f5a623'],
+    tint: 'rgba(232, 163, 61, 0.16)',
+    tint2: 'rgba(64, 224, 255, 0.10)',
+    accent: '#f5a623',
+    accent2: '#40e0d0',
+    band: 'rgba(26, 11, 46, 0.72)',
+  },
+  rose: {
+    sky: ['#2b0a2e', '#ff4d8d'],
+    skyStops: [[0, '#2b0a2e'], [0.45, '#8b1e5b'], [0.72, '#ff4d8d'], [1, '#ffb3c8']],
+    sun: ['#ffe0ec', '#ff2e88'],
+    tint: 'rgba(255, 77, 141, 0.18)',
+    tint2: 'rgba(255, 179, 200, 0.10)',
+    accent: '#ff4d8d',
+    accent2: '#ffd166',
+    band: 'rgba(43, 10, 46, 0.72)',
+  },
+  acid: {
+    sky: ['#0a1a05', '#a8e10c'],
+    skyStops: [[0, '#0a1a05'], [0.45, '#3d7a1e'], [0.72, '#a8e10c'], [1, '#e8ff47']],
+    sun: ['#d4ff3f', '#8b2ee6'],
+    tint: 'rgba(168, 225, 12, 0.16)',
+    tint2: 'rgba(139, 46, 230, 0.12)',
+    accent: '#a8e10c',
+    accent2: '#b26bff',
+    band: 'rgba(10, 26, 5, 0.72)',
+  },
+  bayside: {
+    sky: ['#0b3d91', '#7ec8f7'],
+    skyStops: [[0, '#0b3d91'], [0.45, '#2f7fd0'], [0.72, '#7ec8f7'], [1, '#dff3ff']],
+    sun: ['#ffffff', '#ffd166'],
+    tint: 'rgba(126, 200, 247, 0.14)',
+    tint2: 'rgba(255, 255, 255, 0.10)',
+    accent: '#2f7fd0',
+    accent2: '#ff7e5f',
+    band: 'rgba(11, 61, 145, 0.70)',
+  },
+  chrome: {
+    sky: ['#1c0533', '#ffd166'],
+    skyStops: [[0, '#1c0533'], [0.45, '#7a1e6e'], [0.72, '#e6399b'], [1, '#ffd166']],
+    sun: ['#fff6c9', '#ff2e88'],
+    tint: 'rgba(230, 57, 155, 0.18)',
+    tint2: 'rgba(255, 209, 102, 0.12)',
+    accent: '#ff2e88',
+    accent2: '#ffd166',
+    band: 'rgba(28, 5, 51, 0.72)',
+  },
 };
 
 export const LAYOUTS = ['billboard', 'triptych', 'diagonal'];
@@ -310,6 +360,128 @@ function drawCaption(ctx, w, h, state, grade) {
   ctx.restore();
 }
 
+// Round seal stamp, top-right corner: double ring + circular text + star.
+function drawSeal(ctx, w, h, grade) {
+  const r = Math.min(w, h) * 0.055;
+  const cx = w * 0.925;
+  const cy = h * 0.095;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle = 'rgba(12, 3, 32, 0.72)';
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = Math.max(2, r * 0.06);
+  ctx.strokeStyle = '#fff7ee';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.96, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineWidth = Math.max(1, r * 0.03);
+  ctx.strokeStyle = grade.accent;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.80, 0, Math.PI * 2);
+  ctx.stroke();
+  // Ring text, one character at a time around the circle.
+  const ring = '★ VICE CITY NIGHTS ★ EST. 2026 ★';
+  ctx.fillStyle = '#fff7ee';
+  ctx.font = `${Math.max(8, r * 0.17)}px "Russo One", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const step = (Math.PI * 2) / ring.length;
+  for (let i = 0; i < ring.length; i++) {
+    const a = -Math.PI / 2 + i * step;
+    ctx.save();
+    ctx.rotate(a);
+    ctx.translate(0, -r * 0.88);
+    ctx.fillText(ring[i], 0, 0);
+    ctx.restore();
+  }
+  // Central star.
+  ctx.fillStyle = grade.accent;
+  ctx.font = `${r * 0.85}px "Russo One", sans-serif`;
+  ctx.fillText('★', 0, r * 0.06);
+  ctx.restore();
+}
+
+// Two small annotation cards with thin leader lines pointing at panels.
+function drawCallouts(ctx, w, h, state, grade, rects) {
+  const texts = [state.details.callout1, state.details.callout2];
+  const anchors = [
+    { fx: 0.72, fy: 0.10, tx: 0.5, ty: 0.45 }, // hero panel
+    { fx: 0.50, fy: 0.10, tx: 0.5, ty: 0.45 }, // top-right panel
+  ];
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < 2; i++) {
+    const rect = rects[i];
+    if (!rect) continue;
+    const label = (texts[i] || '').trim().toUpperCase();
+    if (!label) continue;
+    const px = rect.x * w;
+    const py = rect.y * h;
+    const pw = rect.w * w;
+    const ph = rect.h * h;
+    const cardX = px + pw * anchors[i].fx;
+    const cardY = py + ph * anchors[i].fy;
+    const targetX = px + pw * anchors[i].tx;
+    const targetY = py + ph * anchors[i].ty;
+    const fontSize = Math.max(10, w * 0.011);
+    ctx.font = `${fontSize}px "Russo One", sans-serif`;
+    const textW = ctx.measureText(label).width;
+    const padX = fontSize * 0.9;
+    const cw = textW + padX * 2;
+    const ch = fontSize * 2.1;
+    // Leader line first, so the card sits on top of it.
+    ctx.strokeStyle = 'rgba(255, 247, 238, 0.9)';
+    ctx.lineWidth = Math.max(1, w * 0.0012);
+    ctx.beginPath();
+    ctx.moveTo(cardX, cardY + ch / 2);
+    ctx.lineTo(targetX, targetY);
+    ctx.stroke();
+    ctx.fillStyle = grade.accent;
+    ctx.beginPath();
+    ctx.arc(targetX, targetY, Math.max(3, w * 0.003), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(12, 3, 32, 0.88)';
+    ctx.fillRect(cardX - cw / 2, cardY - ch / 2, cw, ch);
+    ctx.strokeStyle = grade.accent;
+    ctx.lineWidth = Math.max(1, w * 0.0012);
+    ctx.strokeRect(cardX - cw / 2, cardY - ch / 2, cw, ch);
+    ctx.fillStyle = '#fff7ee';
+    ctx.fillText(label, cardX, cardY + fontSize * 0.05);
+  }
+  ctx.restore();
+}
+
+// Billing block: tiny centred all-caps credits, 1-2 lines, above the
+// corner tag and clear of the title ribbon.
+function drawBilling(ctx, w, h, state) {
+  const text = (state.details.billing || '').trim().toUpperCase();
+  if (!text) return;
+  const fontSize = Math.max(9, w * 0.0085);
+  ctx.save();
+  ctx.font = `${fontSize}px "Russo One", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255, 247, 238, 0.85)';
+  const maxW = w * 0.86;
+  const words = text.split(/\s+/);
+  const lines = [''];
+  for (const word of words) {
+    const trial = lines[lines.length - 1] ? `${lines[lines.length - 1]} ${word}` : word;
+    if (ctx.measureText(trial).width <= maxW || !lines[lines.length - 1]) {
+      lines[lines.length - 1] = trial;
+    } else if (lines.length < 2) {
+      lines.push(word);
+    }
+  }
+  const lineH = fontSize * 1.5;
+  const y0 = lines.length > 1 ? h * 0.938 : h * 0.948;
+  lines.forEach((line, i) => ctx.fillText(line, w / 2, y0 + i * lineH));
+  ctx.restore();
+}
+
 function drawGrain(ctx, w, h, seed) {
   const rnd = seededRandom(seed + 77);
   ctx.save();
@@ -348,11 +520,31 @@ export function defaultState() {
     captionY: 0.83,
     grade: 'sunset',
     layout: 'billboard',
+    details: {
+      seal: true,
+      billing: true,
+      callouts: true,
+      callout1: 'LEONIDA',
+      callout2: 'EST. 2026',
+      billing: 'A VICE CITY NIGHTS POSTER  •  STARRING YOUR PHOTOS  •  MUSIC BY THE SUNSET DRIVE  •  © 2026 LEONIDA PICTURES',
+    },
     panels: [
       { zoom: 1, ox: 0, oy: 0 },
       { zoom: 1, ox: 0, oy: 0 },
       { zoom: 1, ox: 0, oy: 0 },
     ],
+  };
+}
+
+// Poster details shared by every state factory (cover.js + shots.js).
+export function defaultDetails() {
+  return {
+    seal: true,
+    billing: true,
+    callouts: true,
+    callout1: 'LEONIDA',
+    callout2: 'EST. 2026',
+    billing: 'A VICE CITY NIGHTS POSTER  •  STARRING YOUR PHOTOS  •  MUSIC BY THE SUNSET DRIVE  •  © 2026 LEONIDA PICTURES',
   };
 }
 
@@ -377,15 +569,31 @@ export function drawCover(canvas, state, photos) {
   drawPalm(ctx, w * 0.015, h * 0.99, h * 0.25, -0.16, palmColor);
   drawPalm(ctx, w * 0.985, h * 0.99, h * 0.22, 0.14, palmColor);
   drawCaptionBand(ctx, w, h, grade);
-  drawCaption(ctx, w, h, state, grade);
+  const details = state.details || defaultDetails();
+  state = { ...state, details };
+  // When the billing block owns the bottom strip, lift the title a touch
+  // so its ribbon clears the credits below it.
+  const captionState = details.billing
+    ? { ...state, captionY: state.captionY - 0.08 }
+    : state;
+  drawCaption(ctx, w, h, captionState, grade);
+  if (details.seal) drawSeal(ctx, w, h, grade);
+  if (details.callouts) drawCallouts(ctx, w, h, state, grade, rects);
+  if (details.billing) drawBilling(ctx, w, h, state);
   drawGrain(ctx, w, h, 20261120);
-  // Tiny corner tag.
+  // Tiny corner tag: bottom-left normally; top-left when the billing
+  // block owns the bottom strip, so the two never collide.
   ctx.save();
   ctx.font = `${Math.max(11, w * 0.011)}px "Russo One", sans-serif`;
   ctx.fillStyle = 'rgba(255, 247, 238, 0.75)';
   ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  ctx.fillText('VICE CITY NIGHTS — ORIGINAL FAN-STYLE ART', w * 0.02, h * 0.985);
+  if (details.billing) {
+    ctx.textBaseline = 'top';
+    ctx.fillText('VICE CITY NIGHTS — ORIGINAL FAN-STYLE ART', w * 0.02, h * 0.015);
+  } else {
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('VICE CITY NIGHTS — ORIGINAL FAN-STYLE ART', w * 0.02, h * 0.985);
+  }
   ctx.restore();
   return rects;
 }

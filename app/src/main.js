@@ -3,6 +3,7 @@
 // and exports the poster as a PNG in the three post sizes.
 
 import { drawCover, defaultState, panelRects, GRADES, LAYOUTS } from './cover.js';
+import { detectFaceBox, faceCrop } from './face.js';
 import { parseShot, shotCoverState, shotEditorState, SHOT_RATIOS } from './shots.js';
 
 const EXPORT_SIZES = [
@@ -69,6 +70,13 @@ function syncControls() {
   $('sizeVal').textContent = `${Math.round(state.captionSize * 100)}%`;
   $('yRange').value = String(state.captionY);
   $('yVal').textContent = `${Math.round(state.captionY * 100)}%`;
+  const d = state.details || {};
+  if ($('sealChk')) $('sealChk').checked = d.seal !== false;
+  if ($('billingChk')) $('billingChk').checked = d.billing !== false;
+  if ($('calloutsChk')) $('calloutsChk').checked = d.callouts !== false;
+  if ($('callout1Input')) $('callout1Input').value = d.callout1 || '';
+  if ($('callout2Input')) $('callout2Input').value = d.callout2 || '';
+  if ($('billingInput')) $('billingInput').value = d.billing || '';
   for (let i = 0; i < 3; i++) {
     $(`zoom${i}`).value = String(state.panels[i].zoom);
     $(`zoomVal${i}`).textContent = `${Math.round(state.panels[i].zoom * 100)}%`;
@@ -131,6 +139,21 @@ function bindControls() {
     });
   });
   $('ratioSelect').addEventListener('change', render);
+  // Poster details: seal / billing block / callouts + their texts.
+  const bindDetail = (id, key, isText) => {
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener(isText ? 'input' : 'change', (e) => {
+      state.details[key] = isText ? e.target.value : e.target.checked;
+      render();
+    });
+  };
+  bindDetail('sealChk', 'seal', false);
+  bindDetail('billingChk', 'billing', false);
+  bindDetail('calloutsChk', 'callouts', false);
+  bindDetail('callout1Input', 'callout1', true);
+  bindDetail('callout2Input', 'callout2', true);
+  bindDetail('billingInput', 'billing', true);
   for (let i = 0; i < 3; i++) {
     $(`file${i}`).addEventListener('change', async (e) => {
       const file = e.target.files && e.target.files[0];
@@ -158,6 +181,14 @@ function bindControls() {
       $(`zoomVal${i}`).textContent = `${Math.round(state.panels[i].zoom * 100)}%`;
       render();
     });
+    const faceBtn = $(`face${i}`);
+    if (faceBtn) {
+      faceBtn.addEventListener('click', () => applyFaceCrop(i, false));
+    }
+  }
+  const closeupBtn = $('closeup0');
+  if (closeupBtn) {
+    closeupBtn.addEventListener('click', () => applyFaceCrop(0, true));
   }
   $('resetBtn').addEventListener('click', async () => {
     state = defaultState();
@@ -232,6 +263,84 @@ function bindDrag() {
   stage.addEventListener('pointercancel', endDrag);
 }
 
+// Face-aware crop for one panel: detect the face, centre it, keep the
+// current crop untouched when no face is found. tight = hero close-up.
+async function applyFaceCrop(i, tight) {
+  const img = photos[i];
+  if (!img) {
+    setStatus(`Panel ${i + 1}: load a photo first, then Face crop.`);
+    return false;
+  }
+  setStatus(`Panel ${i + 1}: looking for a face…`);
+  let box = null;
+  try {
+    box = await detectFaceBox(img);
+  } catch {
+    box = null;
+  }
+  if (!box) {
+    setStatus(`Panel ${i + 1}: no face found — keeping the current crop.`);
+    return false;
+  }
+  const rects = panelRects(stage.width, stage.height, state.layout);
+  const rect = rects[i];
+  const panelW = rect.w * stage.width;
+  const panelH = rect.h * stage.height;
+  state.panels[i] = faceCrop(img, box, panelW, panelH, tight);
+  syncControls();
+  render();
+  setStatus(tight
+    ? `Panel ${i + 1}: close-up on the face.`
+    : `Panel ${i + 1}: face centred.`);
+  return true;
+}
+
+// Drag-and-drop image files onto the stage: the drop point picks the
+// panel (outside any panel goes to the hero), with a visible overlay.
+function bindDrop() {
+  const hint = $('dropHint');
+  const showHint = (on) => {
+    if (hint) hint.hidden = !on;
+  };
+  const panelAt = (clientX, clientY) => {
+    const r = stage.getBoundingClientRect();
+    const x = ((clientX - r.left) / r.width) * stage.width;
+    const y = ((clientY - r.top) / r.height) * stage.height;
+    const rects = panelRects(stage.width, stage.height, state.layout);
+    for (let i = rects.length - 1; i >= 0; i--) {
+      const panel = rects[i];
+      if (x >= panel.x * stage.width && x <= (panel.x + panel.w) * stage.width
+        && y >= panel.y * stage.height && y <= (panel.y + panel.h) * stage.height) {
+        return i;
+      }
+    }
+    return 0;
+  };
+  stage.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    showHint(true);
+  });
+  stage.addEventListener('dragleave', () => showHint(false));
+  stage.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    showHint(false);
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) {
+      setStatus('Drop an image file onto the poster to use it as a panel photo.');
+      return;
+    }
+    const i = panelAt(e.clientX, e.clientY);
+    try {
+      const url = URL.createObjectURL(file);
+      photos[i] = await loadImage(url);
+      setStatus(`Panel ${i + 1}: dropped in ${file.name}. Drag the photo to reposition it.`);
+      render();
+    } catch {
+      setStatus(`Panel ${i + 1}: that file could not be read as a photo.`);
+    }
+  });
+}
+
 async function loadSamples() {
   const loaded = await Promise.all(
     SAMPLES.map((src) => loadImage(src).catch(() => null)),
@@ -254,9 +363,18 @@ async function boot() {
   await loadSamples();
   bindControls();
   bindDrag();
+  bindDrop();
   syncControls();
   render();
-  setStatus('Sample photos loaded — swap any panel with your own photo, then Download PNG.');
+  if (shot.shot === 'editor' && shot.face === '1') {
+    // Deterministic face-crop demo: same sample photo, same result.
+    const done = await applyFaceCrop(0, false);
+    setStatus(done
+      ? 'Face crop demo: the hero panel is centred on the face in sample photo 1.'
+      : 'Face crop demo: no face found in sample photo 1 — keeping the current crop.');
+  } else {
+    setStatus('Sample photos loaded — swap any panel with your own photo, then Download PNG.');
+  }
   window.addEventListener('resize', render);
 }
 
