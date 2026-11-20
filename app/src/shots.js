@@ -1,30 +1,58 @@
-// Screenshot scenes for Vice City Nights.
-// Parses the ?shot= query string into one plain preset object so main.js can
-// set up a fixed, repeatable scene (layout, grade, caption, export size) and
-// headless Chromium can screenshot it. No drawing happens here.
+// Vice City Nights — deterministic screenshot states.
+// `?shot=cover&size=wide&caption=...` renders one fixed cover or editor
+// state so headless Chromium can screenshot the app repeatably. Only used
+// for the entry's own screenshots; the normal app ignores these params.
 
-export const SHOT_SIZES = {
-  '1080x1080': [1080, 1080],
-  '1080x1350': [1080, 1350],
-  '1920x1080': [1920, 1080],
+export const SHOT_PRESETS = {
+  cover: {
+    layout: 'nights', theme: 'sunset', size: 'wide',
+    caption: 'VICE CITY', caption2: 'NIGHTS',
+    sub: 'Grand Theft Auto VI · Out Now',
+    captionScale: 1, panelPhoto: [0, 1, 0],
+  },
+  'cover-portrait': {
+    layout: 'nights', theme: 'neon', size: 'portrait',
+    caption: 'VICE CITY', caption2: 'AFTER DARK',
+    sub: 'Grand Theft Auto VI · Out Now',
+    captionScale: 1, panelPhoto: [1, 0, 1],
+  },
+  'cover-square': {
+    layout: 'strip', theme: 'midnight', size: 'square',
+    caption: 'LEONIDA', caption2: 'NIGHTS',
+    sub: 'Grand Theft Auto VI · Out Now',
+    captionScale: 0.95, panelPhoto: [0, 1, 0],
+  },
+  editor: {
+    layout: 'nights', theme: 'sunset', size: 'wide',
+    caption: 'VICE CITY', caption2: 'NIGHTS',
+    sub: 'Grand Theft Auto VI · Out Now',
+    captionScale: 1, panelPhoto: [0, 1, 0],
+  },
 };
 
-/** Reads layout / grade / caption / subtitle / size out of a URLSearchParams. */
-export function shotPreset(query) {
-  const size = SHOT_SIZES[query.get('size') ?? ''] ?? null;
-  return {
-    photo: query.get('photo') ?? 'boulevard',
-    photo2: query.get('photo2') ?? 'pier',
-    layout: query.get('layout') ?? null,
-    grade: query.get('grade') ?? null,
-    caption: query.get('caption') ?? null,
-    sub: query.get('sub') ?? null,
-    size,
-    sizeName: query.get('size') ?? null,
-  };
-}
-
-/** Marks the page ready for a screenshot once two frames have painted. */
-export function markShotReady() {
-  requestAnimationFrame(() => requestAnimationFrame(() => { window.__shotReady = true; }));
+// Apply a shot preset (plus any query overrides) to the editor state.
+// `loadSample` loads a bundled sample photo into a slot. Cover shots hide
+// the editor chrome so the screenshot is the exported cover itself.
+export async function applyShot(state, params, loadSample) {
+  const name = params.get('shot') || 'cover';
+  const preset = SHOT_PRESETS[name] || SHOT_PRESETS.cover;
+  state.layout = params.get('layout') || preset.layout;
+  state.theme = params.get('theme') || preset.theme;
+  state.size = params.get('size') || preset.size;
+  state.caption = (params.get('caption') || preset.caption).toUpperCase();
+  state.caption2 = (params.get('caption2') || preset.caption2 || '').toUpperCase();
+  state.sub = params.get('sub') || preset.sub;
+  state.captionScale = Number(params.get('capscale') || preset.captionScale);
+  state.panelPhoto = preset.panelPhoto.slice();
+  state.selectedPanel = 0;
+  // A cover shot shows the bare cover; an editor shot keeps the UI.
+  if (name === 'cover' || name === 'cover-portrait' || name === 'cover-square') {
+    document.body.classList.add('shot-cover');
+  }
+  // Load the samples the panels need (slots 0 and 1 cover every preset).
+  try { await loadSample(0); } catch (e) { /* keep the gradient panel */ }
+  try { await loadSample(1); } catch (e) { /* keep the gradient panel */ }
+  if (state.panelPhoto.includes(2)) {
+    try { await loadSample(2); } catch (e) { /* keep the gradient panel */ }
+  }
 }
